@@ -1,68 +1,80 @@
 package helper
 
 
+import org.opalj.br.Code
 import org.opalj.br.analyses.Project
+
+import scala.language.postfixOps
 
 object ClassLoaderFinder {
 
+  private def containsDexCLReference(methodBody: Code): Boolean = {
+    val methodBodyText = methodBody toString
+
+    if (methodBodyText contains "dalvik.system.BaseClassLoader") return true
+    if (methodBodyText contains "dalvik.system.DexClassLoader") return true
+    if (methodBodyText contains "dalvik.system.InMemoryDexClassLoader") return true
+    if (methodBodyText contains "dalvik.system.PathClassLoader") return true
+    if (methodBodyText contains "dalvik.system.DelegateLastClassLoader") return true
+
+    false
+  }
+
+  private def containsNonDexCLReference(methodBody: Code): Boolean = {
+    val methodBodyText = methodBody toString
+
+    if (methodBodyText contains "java.lang.ClassLoader") return true
+    if (methodBodyText contains "java.net.URLClassLoader") return true
+
+    false
+  }
+
   def analyzeConcreteJAR(projectJARPath: String): Unit = {
-    implicit val p =
+
+    val p =
       Project(new java.io.File(projectJARPath), org.opalj.bytecode.RTJar)
     var numReflectionCalls: Int = 0
-    var numberOfLoadedClasses: Int = 0
-    var dexClassLoaderReferences: Int = 0
-    var classLoaderReferences: Int = 0
 
-    p.allMethodsWithBody.foreach { method =>
-    {
+    var numberOfDexClassLoaderReferences: Int = 0
+
+    var numberOfNonDexClassLoaderReferences: Int = 0
+
+    p.allMethodsWithBody.foreach { method => {
       val body = method.body
-      if (body != None) {
+      if (body isDefined) {
         if (body.toString.contains("java.lang.reflect")) {
           numReflectionCalls += 1
         }
-        if ((body toString).contains("dexclassloader")) {
-          numberOfLoadedClasses += 1
-          dexClassLoaderReferences += 1
+        if (containsDexCLReference(body.get)) {
+          numberOfDexClassLoaderReferences += 1
+
         }
-        if (body.toString.contains("java.lang.ClassLoader")) {
-          if (body.get == None) {
-            return;
-          }
-          ///
-          body.get.foreach {
-            pcAndInstruction => {
-              val line = pcAndInstruction.instruction.toString(pcAndInstruction.pc)
-              if (line.contains("DynamiteLoaderV2") || line.contains("HwNotchSizeUtil") ||line.contains("InstantAppsRuntime"))
-                println("InstructionPrinted: " + pcAndInstruction.instruction.toString(pcAndInstruction.pc))
-            }
-          }
+        if (containsNonDexCLReference(body.get)) {
+          numberOfNonDexClassLoaderReferences += 1
+
           /*
           body.get.foreach {
             pcAndInstruction => println("InstructionPrinted" + pcAndInstruction.instruction.toString(pcAndInstruction.pc))
           } // Output e.g. InstructionPrintedINVOKESPECIAL(androidx.fragment.app.Fragment$SavedState{ void <init>(android.os.Parcel,java.lang.ClassLoader) })
           */
 
-          ///
-          val methodInvokatopnInstructions = body.get.instructions.filter {
+          val methodInvokationInstructions = body.get.instructions.filter {
             instruction =>
               instruction != null && instruction.isMethodInvocationInstruction
           }
-          val objectTypes = methodInvokatopnInstructions.filter {
+          val objectTypes = methodInvokationInstructions.filter {
             instruction =>
               instruction.asMethodInvocationInstruction.declaringClass.isObjectType
           }
-          val classLoaderUses = objectTypes.filter { instruction =>
+          val classLoaderUsages = objectTypes.filter { instruction =>
             instruction.asMethodInvocationInstruction.declaringClass.asObjectType.fqn
               .contains("java/lang/ClassLoader")
           }
-          if (classLoaderUses.nonEmpty) {
+          if (classLoaderUsages.nonEmpty) {
             println(
-              method.classFile.fqn + " => " + method.toJava + " => " + classLoaderUses.head
+              method.classFile.fqn + " => " + method.toJava + " => " + classLoaderUsages.head
             )
           }
-
-          numberOfLoadedClasses += 1
-          classLoaderReferences += 1
         }
 
       }
@@ -71,10 +83,11 @@ object ClassLoaderFinder {
     }
 
     println(
-      "Found " + numReflectionCalls + " reflection calls and " + numberOfLoadedClasses + " potential loaded classes"
+      "Found " + numReflectionCalls + " classes that may contain reflections and " +
+        numberOfDexClassLoaderReferences + " classes containing dexClassLoader references"
     )
     println(
-      "dexclassloader: " + dexClassLoaderReferences + " java.lang.ClassLoader: " + classLoaderReferences
+      "Dexclassloader: " + numberOfDexClassLoaderReferences + " java.lang.ClassLoader: " + numberOfNonDexClassLoaderReferences
     )
   }
 }
