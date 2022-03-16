@@ -22,6 +22,8 @@ object StringDecryption {
 
   val options = new Options()
 
+
+
   options.addOption("f", "file", true, "input file <jar or file with file paths>")
   options.addOption("s", "single", false, "analyzes only a single input file")
   options.addOption("st", "strings", false, "only string classifier on string files")
@@ -33,6 +35,7 @@ object StringDecryption {
   options.addOption("bf", "bruteforce", false, "enables brute force decryption for slicing")
   options.addOption("d", "debug", false, "disables threading for debug purposes")
   options.addOption("j", "isjava", false, "loads additional libraries for slicing of java applications")
+  options.addOption("cl", "classes", false, "find classes loaded at runtime")
 
   val logSlicing = true
 
@@ -54,6 +57,7 @@ object StringDecryption {
 
   def createDirs(outputDir: String): Unit = {
     new File(outputDir + "/results/").mkdir()
+    new File(outputDir + "/results/debugging/").mkdir()
     new File(outputDir + "/logs/").mkdir()
   }
 
@@ -91,7 +95,11 @@ object StringDecryption {
           new StringFeatureExtraction(jar, List(file.getName), filterSet).doAnalyze()
         } else if (line.hasOption("cstat")) {
           runOnOneFile(jar, "cstat", filterSet, bruteforce, debug, !line.hasOption("j"))
-        } else {
+        } else if (line.hasOption("cl")) {
+          runOnOneFile(jar, "cl", filterSet, bruteforce, debug, !line.hasOption("j"))
+        }
+
+        else {
           runOnOneFile(jar, "", filterSet, bruteforce, debug, !line.hasOption("j"))
         }
       } else {
@@ -175,6 +183,7 @@ object StringDecryption {
 
   def runOnOneFile(jar: File, analysis: String, filterSet: Set[String], bruteForce: Boolean, debug: Boolean, isAndroid: Boolean): Unit = {
     val jarName = jar.getName
+    println("runOnOneFIle")
 
     //val resultFile = new File(outputDir + "/results/" + jarName + ".txt")
 
@@ -185,20 +194,28 @@ object StringDecryption {
     forbidSystemExitCall()
     val t0 = System.currentTimeMillis()
     try {
+      println("try")
       val androidLib = new File(AndroidJarAnalysis.identifyAndroidJar(jar))
       val p = Project(Array(jar), Array(stdLib, androidLib))
       OPALLogger.updateLogger(p.logContext, ErrorLogger)
+      println("analysis: " +  analysis)
       analysis match {
         case "m" =>
           new MethodFilterAnalysis(p, parameters).doAnalyze(t0)
         case "stm" =>
           new StringAndMethodAnalysis(p, parameters).doAnalyze(t0)
         case "cstat" => new CodeStringFeatureExtraction(p, parameters, filterSet).doAnalyze()
+        case "cl" => {
+          println("SlicingClassAnalysis")
+          new SlicingClassAnalysis(p, parameters).doAnalyze(t0, bruteForce, debug, isAndroid)
+        }
         case _ =>
           new SlicingAnalysis(p, parameters).doAnalyze(t0, bruteForce, debug, isAndroid)
       }
     } catch {
+
       case e: Throwable =>
+        println(e)
         logger.error(parameters.head)
         logger.error(e.getMessage)
         logger.error(e.getStackTrace.mkString("\n"))

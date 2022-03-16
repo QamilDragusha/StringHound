@@ -22,7 +22,7 @@ object ClassDecryption {
      analyzeApk(fileName, outputDir)
     } else if (fileName.endsWith(".jar")) {
       println("Analyzing given jar...")
-      ClassLoaderFinder.analyzeConcreteJAR(fileName)
+//      ClassLoaderFinder.findCLassLoaderReferenceMethods(fileName)
     }
 
   }
@@ -40,7 +40,7 @@ object ClassDecryption {
       }
 
       if (result.repackagingSuccessful) {
-        ClassLoaderFinder.analyzeConcreteJAR(result.pathToJar)
+        // ClassLoaderFinder.findCLassLoaderReferenceMethods(result.pathToJar)
       }
     }
   }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="analysis [file:/C:/Users/glanz/git/StringHound/analysis/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="analysis [file:/Users/qamildragusha/IdeaProjects/Forked_StringHound/analysis/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/../../target/scala-2.12/classes" />
     <output-test url="file://$MODULE_DIR$/../../target/scala-2.12/test-classes" />
@@ -11,10 +11,49 @@
       <sourceFolder url="file://$MODULE_DIR$/../../target/scala-2.12/src_managed/main" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../target/scala-2.12/src_managed/test" isTestSource="true" generated="true" />
       <excludeFolder url="file://$MODULE_DIR$/../../target" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/android/support/customtabs" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/android/support/v4" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/androidx" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/bitter" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/com" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/io" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/kotlin" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/kotlinx" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/okhttp3" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/okio" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/org" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-annotations:2.8.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-core:2.8.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-databind:2.8.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.8.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.googlecode.concurrentlinkedhashmap:concurrentlinkedhashmap-lru:1.3.2:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.iheart:ficus_2.12:1.4.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.typesafe.play:play-functional_2.12:2.6.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.typesafe.play:play-json_2.12:2.6.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.typesafe:config:1.3.2:jar" level="project" />
+    <orderEntry type="library" name="sbt: it.unimi.dsi:fastutil:8.1.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: joda-time:joda-time:2.9.9:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: junit:junit:4.12:jar" level="project" />
+    <orderEntry type="library" name="sbt: net.sf.extjwnl:extjwnl-data-wn31:1.2:jar" level="project" />
+    <orderEntry type="library" name="sbt: net.sf.extjwnl:extjwnl:1.9.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.apache.commons:commons-lang3:3.7:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.apache.commons:commons-text:1.3:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: org.hamcrest:hamcrest-core:1.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-parser-combinators_2.12:1.1.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-xml_2.12:1.1.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.12.8:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-reflect:2.12.8:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: org.scala-sbt:test-interface:1.0:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: org.scalacheck:scalacheck_2.12:1.13.5:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: org.scalactic:scalactic_2.12:3.0.5:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: org.scalatest:scalatest_2.12:3.0.5:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.slf4j:slf4j-api:1.7.25:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.slf4j:slf4j-simple:1.7.25:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.typelevel:macro-compat_2.12:1.1.1:jar" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="sbt: unmanaged-jars-runtime">
         <CLASSES>
@@ -62,33 +101,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="sbt: org.typelevel:macro-compat_2.12:1.1.1:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.slf4j:slf4j-simple:1.7.25:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.slf4j:slf4j-api:1.7.25:jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="sbt: org.scalatest:scalatest_2.12:3.0.5:jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="sbt: org.scalactic:scalactic_2.12:3.0.5:jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="sbt: org.scalacheck:scalacheck_2.12:1.13.5:jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="sbt: org.scala-sbt:test-interface:1.0:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-xml_2.12:1.1.0:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-parser-combinators_2.12:1.1.0:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scala-lang:scala-reflect:2.12.8:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.12.8:jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="sbt: org.hamcrest:hamcrest-core:1.3:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.apache.commons:commons-text:1.3:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.apache.commons:commons-lang3:3.7:jar" level="project" />
-    <orderEntry type="library" name="sbt: net.sf.extjwnl:extjwnl-data-wn31:1.2:jar" level="project" />
-    <orderEntry type="library" name="sbt: net.sf.extjwnl:extjwnl:1.9.4:jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="sbt: junit:junit:4.12:jar" level="project" />
-    <orderEntry type="library" name="sbt: joda-time:joda-time:2.9.9:jar" level="project" />
-    <orderEntry type="library" name="sbt: it.unimi.dsi:fastutil:8.1.1:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.typesafe.play:play-json_2.12:2.6.9:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.typesafe.play:play-functional_2.12:2.6.9:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.typesafe:config:1.3.2:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.iheart:ficus_2.12:1.4.3:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.googlecode.concurrentlinkedhashmap:concurrentlinkedhashmap-lru:1.3.2:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.9:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.8.9:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-databind:2.8.9:jar" level="project" />
-    <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-core:2.8.9:jar" level="project" />
   </component>
 </module>

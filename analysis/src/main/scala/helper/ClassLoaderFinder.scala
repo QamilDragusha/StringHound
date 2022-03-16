@@ -1,94 +1,115 @@
 package helper
 
 
-import org.opalj.br.Code
+import org.opalj.br.{Code, Method, ObjectType, ObjectTypes, PCInMethod}
 import org.opalj.br.analyses.Project
+import org.opalj.br.instructions.{INVOKESPECIAL, Instruction}
+import org.opalj.collection.immutable.ConstArray
+import org.opalj.slicing.DeobfuscationSlicer
 
+import java.net.URL
+import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 
-object ClassLoaderFinder {
+class ClassLoaderFinder(project: Project[URL]) {
 
-  private def containsDexCLReference(methodBody: Code): Boolean = {
-    val methodBodyText = methodBody toString
 
-    if (methodBodyText contains "dalvik.system.BaseClassLoader") return true
-    if (methodBodyText contains "dalvik.system.DexClassLoader") return true
-    if (methodBodyText contains "dalvik.system.InMemoryDexClassLoader") return true
-    if (methodBodyText contains "dalvik.system.PathClassLoader") return true
-    if (methodBodyText contains "dalvik.system.DelegateLastClassLoader") return true
+  // QAMIL: TODO: Check if that even needs to be implemented
+  def findClassLoaderPathStrings() : Map[String, ConstArray[PCInMethod]] = {
+     Map()
+  }
 
+  private def instructionContainsClassLoaderOfInterest() (implicit instructionText: String) : Boolean = {
+    if (instructionText contains "dalvik.system.BaseClassLoader") return true
+    if (instructionText contains "dalvik.system.DexClassLoader") return true // QAMIL: Sollte das nicht BaseDexClassLoader sein?
+    if (instructionText contains "dalvik.system.InMemoryDexClassLoader") return true
+    if (instructionText contains "dalvik.system.PathClassLoader") return true
+    if (instructionText contains "dalvik.system.DelegateLastClassLoader") return true
     false
   }
 
-  private def containsNonDexCLReference(methodBody: Code): Boolean = {
-    val methodBodyText = methodBody toString
-
-    if (methodBodyText contains "java.lang.ClassLoader") return true
-    if (methodBodyText contains "java.net.URLClassLoader") return true
-
-    false
+  private def instructionInvokesClassLoaderOfInterest() (implicit instruction: Instruction) : Boolean = {
+    implicit val instructionText = instruction.toString()
+    instruction.opcode == INVOKESPECIAL.opcode && instructionContainsClassLoaderOfInterest() && instructionText.contains("<init>")
   }
 
-  def analyzeConcreteJAR(projectJARPath: String): Unit = {
+  private def findClassifiedClassLoaderReferenceMethods() : List[(Int, Method)] = {
 
-    val p =
-      Project(new java.io.File(projectJARPath), org.opalj.bytecode.RTJar)
-    var numReflectionCalls: Int = 0
 
-    var numberOfDexClassLoaderReferences: Int = 0
+    var foundCases : List[(Int, Method)] = Nil
 
-    var numberOfNonDexClassLoaderReferences: Int = 0
+    project.allProjectClassFiles foreach {
+      classFile => {
+        classFile.methodsWithBody foreach {
+          methodWithBody => {
+            val methodBody : Code = methodWithBody.body.get
 
-    p.allMethodsWithBody.foreach { method => {
-      val body = method.body
-      if (body isDefined) {
-        if (body.toString.contains("java.lang.reflect")) {
-          numReflectionCalls += 1
-        }
-        if (containsDexCLReference(body.get)) {
-          numberOfDexClassLoaderReferences += 1
+            methodBody foreach {
+              pcAndInstruction => {
+                implicit val instruction = pcAndInstruction.instruction
+                if (instructionInvokesClassLoaderOfInterest()) {
+                  foundCases = (pcAndInstruction.pc, methodWithBody) :: foundCases
+                }
+              }
+            }
 
-        }
-        if (containsNonDexCLReference(body.get)) {
-          numberOfNonDexClassLoaderReferences += 1
-
-          /*
-          body.get.foreach {
-            pcAndInstruction => println("InstructionPrinted" + pcAndInstruction.instruction.toString(pcAndInstruction.pc))
-          } // Output e.g. InstructionPrintedINVOKESPECIAL(androidx.fragment.app.Fragment$SavedState{ void <init>(android.os.Parcel,java.lang.ClassLoader) })
-          */
-
-          val methodInvokationInstructions = body.get.instructions.filter {
-            instruction =>
-              instruction != null && instruction.isMethodInvocationInstruction
-          }
-          val objectTypes = methodInvokationInstructions.filter {
-            instruction =>
-              instruction.asMethodInvocationInstruction.declaringClass.isObjectType
-          }
-          val classLoaderUsages = objectTypes.filter { instruction =>
-            instruction.asMethodInvocationInstruction.declaringClass.asObjectType.fqn
-              .contains("java/lang/ClassLoader")
-          }
-          if (classLoaderUsages.nonEmpty) {
-            println(
-              method.classFile.fqn + " => " + method.toJava + " => " + classLoaderUsages.head
-            )
           }
         }
-
       }
+    }
 
+    foundCases
+  }
+
+  def findCLassLoaderReferenceMethods(): List[(Int, Method)] = {
+
+    return findClassifiedClassLoaderReferenceMethods()
+
+    var methodsCreatingClassLoaders : List[(Int, Method)] = Nil;
+
+    var matchedMethodsCreatingClassLoaders : List[(Int, Method)] = Nil
+
+    val classesInheritingCLs = project.allProjectClassFiles filter {
+      // TODO: Werden hier Parameter-Positionen verändert?
+      // Im INVOKESPECIAL pattern-matching dann dementsprechend berücksichtigen (buildMethidForOrigin)
+      projectClassFile => {
+        val superClasses = project.classHierarchy.allSuperinterfacetypes(projectClassFile.thisType, false)
+        superClasses.exists{
+          superClass => (superClass == ObjectType("java/lang/ClassLoader") || superClass == ObjectType("dalvik/system/BaseClassLoader")  || superClass== ObjectType("dalvik/system/DexClassLoader")
+            || superClass == ObjectType("dalvik/system/InMemoryDexClassLoader") || superClass == ObjectType("dalvik/system/PathClassLoader")
+            || superClass == ObjectType("dalvik/system/DelegateLastClassLoader"))
+        }
     }
     }
 
-    println(
-      "Found " + numReflectionCalls + " classes that may contain reflections and " +
-        numberOfDexClassLoaderReferences + " classes containing dexClassLoader references"
-    )
-    println(
-      "Dexclassloader: " + numberOfDexClassLoaderReferences + " java.lang.ClassLoader: " + numberOfNonDexClassLoaderReferences
-    )
+    classesInheritingCLs foreach {
+      file => println(file)
+    }
+
+    val objectTypes = classesInheritingCLs.map {
+      classFile => classFile.thisType
+    }
+
+
+    project.allMethodsWithBody foreach { method => {
+      val body = method.body.get
+
+      body.foreach {
+        pcAndInstruction => {
+          (pcAndInstruction.pc, pcAndInstruction.instruction) match {
+            case (pc, INVOKESPECIAL(declaringClass, _, name,_ )) => {
+              if (objectTypes.contains(declaringClass) && name.equals("<init>")) {
+                methodsCreatingClassLoaders = (pc, method) :: methodsCreatingClassLoaders
+              }
+            }
+            case _  =>
+          }
+        }
+      }
+    }
+    }
+
+    methodsCreatingClassLoaders
   }
 }
 

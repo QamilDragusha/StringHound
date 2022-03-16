@@ -4,7 +4,7 @@
 		module="deobfuscator$sources"
 		revision="1.0"
 		status="integration"
-		publication="20190821145441"
+		publication="20220116130748"
 	/>
 	<configurations>
 		<conf name="compile" visibility="public" description=""/>

@@ -4,7 +4,7 @@
 		module="deobfuscator_2.12"
 		revision="1.0"
 		status="integration"
-		publication="20190821145438"
+		publication="20220116130748"
 	>
 		<description>
 		deobfuscator

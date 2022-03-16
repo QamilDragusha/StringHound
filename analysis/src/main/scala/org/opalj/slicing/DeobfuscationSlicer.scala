@@ -21,6 +21,7 @@ class DeobfuscationSlicer(
                            private val result: AIResult {
                              val domain: Domain with RecordDefUse
                            },
+                          // QAMIL: Locaction of interest?
                            private val loi: Int,
                            private val noParameterUsage: Boolean,
                            private val includeLoi: Boolean
