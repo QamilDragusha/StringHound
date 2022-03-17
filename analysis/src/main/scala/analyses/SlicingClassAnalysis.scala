@@ -179,7 +179,7 @@ class SlicingClassAnalysis(
      */
     val classLoaderFinder = new ClassLoaderFinder(project)
     // clrMethods stands for "ClassLoader referencing Methods"
-    val clrMethods = classLoaderFinder.findClassLoaderInstantiatingMethodPoints()
+    val clrMethods = classLoaderFinder.findClassLoaderInstantiationMethodPoints()
 
     clrMethods foreach { tuple =>
       println(tuple._2)

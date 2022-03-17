@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Implementing SlicingClassAnalysis">
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Refactored and optimized ClassLoaderFinder">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/helper/ClassLoaderFinder.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/helper/ClassLoaderFinder.scala" afterDir="false" />
@@ -187,6 +187,17 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
+      <option name="arquillianRunConfiguration">
+        <value>
+          <option name="containerStateName" value="" />
+        </value>
+      </option>
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <list>
       <item itemvalue="Application.ClassDecryption" />
       <item itemvalue="Application.StringDecryption" />
@@ -219,7 +230,7 @@
       <workItem from="1646943468765" duration="8936000" />
       <workItem from="1647089972971" duration="20200000" />
       <workItem from="1647448727971" duration="23872000" />
-      <workItem from="1647526746222" duration="861000" />
+      <workItem from="1647526746222" duration="2966000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -242,7 +253,14 @@
       <option name="project" value="LOCAL" />
       <updated>1647453493219</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Refactored and optimized ClassLoaderFinder">
+      <created>1647527674015</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1647527674015</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -299,7 +317,8 @@
     <MESSAGE value="Added apk_analyzer into project" />
     <MESSAGE value="Refactored ClassLoaderFinder and fixed DexClassLoaderAnalysis" />
     <MESSAGE value="Implementing SlicingClassAnalysis" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implementing SlicingClassAnalysis" />
+    <MESSAGE value="Refactored and optimized ClassLoaderFinder" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactored and optimized ClassLoaderFinder" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
