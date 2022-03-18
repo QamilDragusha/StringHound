@@ -7,14 +7,15 @@ import java.io.{File, FileWriter}
 
 object Dumper {
 
+
   private val classFiles = false
   private val slicedMethods = false
 
 
-  private val arbitraryMethods = true
-  private val methodTemplates = true
-  private val codeDirectly = true
-  private val arbitraryClassFiles = true
+  private val arbitraryMethods = false
+  private val methodTemplates = false
+  private val codeDirectly = false
+  private val arbitraryClassFiles = false
 
   private var uniqueId : Int = 0
 

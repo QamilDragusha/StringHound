@@ -48,8 +48,12 @@ class SlicingClassAnalysis(
     val parameters: Seq[String]
 ) {
 
+  implicit val projectToAnalyze: Project[URL] = project
+  implicit val classHierarchy: ClassHierarchy = project.classHierarchy
+
   private lazy val charSeqClazz = Class.forName("java.lang.CharSequence")
   private val CharSequenceObjectType = ObjectType("java/lang/CharSequence")
+
   var genericErrors = new AtomicInteger
   var out: PrintStream = _
   var err: PrintStream = _
@@ -78,6 +82,15 @@ class SlicingClassAnalysis(
   var first = true
   var clean = false
 
+  var bruteforce = false
+
+  val logStream = new FileWriter(
+    new File(
+      StringDecryption.outputDir + "/logs/" + parameters.head + "Log.txt"
+    ),
+    false
+  )
+
   val cleanTask: TimerTask = new TimerTask() {
     override def run(): Unit = {
       if (!debug) {
@@ -85,8 +98,6 @@ class SlicingClassAnalysis(
       }
     }
   }
-
-  var bruteforce = false
 
   val slicingTimerTask: TimerTask = new TimerTask() {
     override def run(): Unit = {
@@ -121,16 +132,6 @@ class SlicingClassAnalysis(
   var decryptionContextSet =
     Map.empty[Method, (MethodTemplate, Set[ClassFile], ClassFile)]
 
-  def isRelevantSink(mii: MethodInvocationInstruction): Boolean = {
-    if (mii.declaringClass.isObjectType) {
-      val methodSignature = MethodSignatureWrapper(
-        mii.methodDescriptor.toJava(mii.name)
-      ).toString
-      val sink = mii.declaringClass.asObjectType.fqn
-        .replace('/', '.') + " " + methodSignature
-      relevantSinks.contains(sink)
-    } else false
-  }
 
   def doAnalyze(
       t0: Long,
@@ -138,107 +139,72 @@ class SlicingClassAnalysis(
       debug: Boolean,
       isAndroid: Boolean
   ): Unit = {
-    println("Analyze Classes")
-    out = System.out
-    err = System.err
-    bruteforce = bf
-    this.debug = debug
-    libraryClasses = project.allLibraryClassFiles.toSet
-    if (isAndroid)
-      urls = List.empty[URL].toArray
-    else
-      urls = new File(parameters.tail.head)
-        .listFiles(f ⇒ f.getName.endsWith(".jar"))
-        .map(_.toURI.toURL)
-    resultStream = new FileWriter(
-      new File(
-        StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
-      ),
-      false
-    )
-    val logStream = new FileWriter(
-      new File(
-        StringDecryption.outputDir + "/logs/" + parameters.head + "Log.txt"
-      ),
-      false
-    )
-    logStream.write(
-      "Apk;PreAnalysisTime;StringClassifierTime;MethodClassifierTime;SlicingTime;OverallTime;ClassCount;MethodCount;MeanInstPerMethodCount;MedianInstPerMethodCount;MaxInstPerMethodCount;ApkInstCount;StringUniqCount;DecryptedStrings;SlicesCount\n"
-    )
-    System.setOut(devNullPrintStream)
-    System.setErr(devNullPrintStream)
-    implicit val p: Project[URL] = project
-    implicit val classHierarchy: ClassHierarchy = project.classHierarchy
+    setupAnalysis(bf, debug, isAndroid)
+
+    var amount = 0
+
     val start = Instant.now()
     // QAMIL Making sure that String Classifier is initialized, will otherwise cause an java.lang.NoClassDefFoundError
     StringClassifier.classify("dummy")
+
     val t1, t2, t3 = System.currentTimeMillis()
 
-    /*
-    CLR = ClassLoaderReferencing
-     */
+
     val classLoaderFinder = new ClassLoaderFinder(project)
-    // clrMethods stands for "ClassLoader referencing Methods"
-    val clrMethods = classLoaderFinder.findClassLoaderInstantiationMethodPoints()
 
-    clrMethods foreach { tuple =>
-      println(tuple._2)
-    }
+    val classLoaderInstatiations = classLoaderFinder.findClassLoaderInstantiations()
+    val classLoaderUsages = classLoaderFinder.findClassLoaderUsages()
 
-    println("printed clrMethods")
+    val methodInstructionsToAnalyze = classLoaderUsages
 
-    if (clrMethods.nonEmpty) {
-      //stringUsages = constantStrings.filter(s => s.length > 2).toList.sortBy((s: String) => (-s.length, s))
-      var clrMethodsAndUsages: Set[Method] = Set.empty[Method]
-      try {
-        val callGraph = CallGraphFactory.createOPALCallGraph(project)
-        clrMethodsAndUsages = clrMethods
-          .flatMap(cm =>
-            callGraph(cm._2).map(f => f._1.asDefinedMethod.definedMethod).toSet
-          )
-          .toSet
-      } catch {
-        case _: Throwable =>
-          // qamil: Brauchen wir das mit dem CallGraphen überhaupt?
-          val callGraph = CallGraphFactory.createCHACallGraph(project)
-          clrMethodsAndUsages = clrMethods
-            .flatMap(cm =>
-              if (callGraph.contains(cm._2)) callGraph(cm._2)
-              else Set.empty[Method]
-            )
-            .toSet
-      }
+    println("printed methodInstructionsInstatiatingClassLoaders")
 
-      val clrMethodsToAppend = clrMethods.map(m => m._2).toSet
-
-      // QAMIL : Maybe take a look at the string used in classLoaders (if there are any) ?
-      clrMethodsAndUsages = clrMethodsAndUsages ++ clrMethodsToAppend
+    if (methodInstructionsToAnalyze.nonEmpty) {
+      //val methodsInvokingCLInstantiatingMethods = findMethodInvokations(methodInstructionsInstatiatingClassLoaders)
 
       System.setOut(out)
-      println("Methods to slice: " + clrMethodsAndUsages.size)
+      println("Methods to slice: " + methodInstructionsToAnalyze.size)
       System.setOut(devNullPrintStream)
+
+
+
       val cleanTimer = new Timer()
       cleanTimer.schedule(cleanTask, 1000, 120000)
       val timer = new Timer()
       timer.schedule(slicingTimerTask, 1000, 10000)
-      clrMethodsAndUsages.foreach { method =>
+      methodInstructionsToAnalyze.foreach { methodPcPair => {
+        val (method, programCounters) = methodPcPair
+
+        if (programCounters.isEmpty)
+          {
+            println("PROGRAMCOUNTER IS EMPTY!")
+          }
+
         // QAMIL: DUMP METHOD ########
-        Dumper.dumpMethod(method, "doAnalyze/")
+         Dumper.dumpMethod(method, "doAnalyze/")
+
+
+
+        val methodBody = method.body.get
 
         try {
 
           val domain =
             new ai.domain.l1.DefaultDomainWithCFGAndDefUse(project, method)
               with SlicingConfiguration
-          val body = method.body.get
 
           lazy val result
-              : AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] } =
+          : AIResult {val domain: DefaultDomainWithCFGAndDefUse[URL]} =
             PerformAI(domain)
 
-          body.iterate { (pc, instruction) =>
-          // qamil TODO: Das muss anders implementiert werden, 2 Abfragen sind zu viel
-          if (classLoaderFinder.instructionInstantiatesKnownClassLoader(pc, method)) {
+          programCounters.foreach { pc =>
+
+          amount += 1
+
+            val instruction = methodBody.instructions(pc)
+
+            println("mathcing instruction " + instruction)
+
             instruction.opcode match {
               // Einziger relevante Fall
               case INVOKESPECIAL.opcode =>
@@ -253,7 +219,7 @@ class SlicingClassAnalysis(
                   if (
                     typeIsOrHoldsCharSequenceObjectType(
                       parameterType
-                    ) || ObjectType.Object == parameterType
+                    ) ||  parameterType == ObjectType.Object || parameterType == ObjectType("java/nio/ByteBuffer")
                   ) {
                     println("\n\n\ntypeChecked: " + parameterType)
 
@@ -277,7 +243,7 @@ class SlicingClassAnalysis(
 
               case _ => // Rest
             }
-          }
+
           }
         } catch {
           case e: Throwable ⇒
@@ -290,6 +256,9 @@ class SlicingClassAnalysis(
               StringDecryption.logger.error(e.getStackTrace.mkString("\n"))
             }
         }
+      }
+
+
       }
       timer.cancel()
       cleanTimer.cancel()
@@ -306,39 +275,71 @@ class SlicingClassAnalysis(
       "Write results to -> " + StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
     )
 
-    val end = Instant.now()
-    val time = ChronoUnit.MILLIS.between(start, end)
+    println("amount: " + amount)
 
-    val allInstructionCounts = project.allMethodsWithBody
-      .map(m => m.body.get.instructionsCount)
-      .toList
-      .sorted
-    logStream.write(
-      Array(
-        parameters.head,
-        t1 - t0,
-        t2 - t1,
-        t3 - t2,
-        t4 - t3,
-        t4 - t0,
-        project.allProjectClassFiles.size,
-        project.allMethods.size,
-        allInstructionCounts.sum.toDouble / (if (allInstructionCounts.nonEmpty)
-                                               allInstructionCounts.size
-                                             else 1),
-        if (allInstructionCounts.nonEmpty)
-          allInstructionCounts(allInstructionCounts.size / 2)
-        else 0,
-        if (allInstructionCounts.nonEmpty) allInstructionCounts.max else 0,
-        allInstructionCounts.sum,
-        constantStrings.size,
-        successful,
-        attempts
-      ).mkString("", ";", "\n")
+    teardownAnalysis(t0,t1,t2,t3,start)
+  }
+
+
+  def setupAnalysis(bf: Boolean, debug: Boolean, isAndroid: Boolean) : Unit = {
+    out = System.out
+    err = System.err
+    bruteforce = bf
+    this.debug = debug
+    libraryClasses = project.allLibraryClassFiles.toSet
+    if (isAndroid)
+      urls = List.empty[URL].toArray
+    else
+      urls = new File(parameters.tail.head)
+        .listFiles(f ⇒ f.getName.endsWith(".jar"))
+        .map(_.toURI.toURL)
+    resultStream = new FileWriter(
+      new File(
+        StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
+      ),
+      false
     )
-    logStream.close()
 
-    resultStream.close()
+    logStream.write(
+      "Apk;PreAnalysisTime;StringClassifierTime;MethodClassifierTime;SlicingTime;OverallTime;ClassCount;MethodCount;MeanInstPerMethodCount;MedianInstPerMethodCount;MaxInstPerMethodCount;ApkInstCount;StringUniqCount;DecryptedStrings;SlicesCount\n"
+    )
+    System.setOut(devNullPrintStream)
+    System.setErr(devNullPrintStream)
+  }
+
+  def isRelevantSink(mii: MethodInvocationInstruction): Boolean = {
+    if (mii.declaringClass.isObjectType) {
+      val methodSignature = MethodSignatureWrapper(
+        mii.methodDescriptor.toJava(mii.name)
+      ).toString
+      val sink = mii.declaringClass.asObjectType.fqn
+        .replace('/', '.') + " " + methodSignature
+      relevantSinks.contains(sink)
+    } else false
+  }
+
+  def findMethodInvokations(methodsOfInterest: ConstArray[(Int, Method)]) : Set[Method] = {
+    var methodsInvokingMethodsOfInterest: Set[Method] = Set.empty[Method]
+    try {
+      val callGraph = CallGraphFactory.createOPALCallGraph(project)
+      methodsInvokingMethodsOfInterest = methodsOfInterest
+        .flatMap(cm =>
+          callGraph(cm._2).map(f => f._1.asDefinedMethod.definedMethod).toSet
+        )
+        .toSet
+    } catch {
+      case _: Throwable =>
+        // qamil: Brauchen wir das mit dem CallGraphen überhaupt?
+        val callGraph = CallGraphFactory.createCHACallGraph(project)
+        methodsInvokingMethodsOfInterest = methodsOfInterest
+          .flatMap(cm =>
+            if (callGraph.contains(cm._2)) callGraph(cm._2)
+            else Set.empty[Method]
+          )
+          .toSet
+    }
+
+    methodsInvokingMethodsOfInterest
   }
 
   /// Index des Parameters kann buer schon zur Deobfuskation genbutzt werden
@@ -1746,6 +1747,49 @@ class SlicingClassAnalysis(
     }
 
     (relevantMethods, relevantFields, relevantClasses)
+  }
+
+  def teardownAnalysis(t0: Long,t1: Long, t2: Long, t3: Long, start: Instant) : Unit = {
+    val t4 = System.currentTimeMillis()
+    System.setErr(err)
+    System.setOut(out)
+    println(
+      "Write results to -> " + StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
+    )
+
+    val end = Instant.now()
+    val time = ChronoUnit.MILLIS.between(start, end)
+
+    val allInstructionCounts = project.allMethodsWithBody
+      .map(m => m.body.get.instructionsCount)
+      .toList
+      .sorted
+    logStream.write(
+      Array(
+        parameters.head,
+        t1 - t0,
+        t2 - t1,
+        t3 - t2,
+        t4 - t3,
+        t4 - t0,
+        project.allProjectClassFiles.size,
+        project.allMethods.size,
+        allInstructionCounts.sum.toDouble / (if (allInstructionCounts.nonEmpty)
+          allInstructionCounts.size
+        else 1),
+        if (allInstructionCounts.nonEmpty)
+          allInstructionCounts(allInstructionCounts.size / 2)
+        else 0,
+        if (allInstructionCounts.nonEmpty) allInstructionCounts.max else 0,
+        allInstructionCounts.sum,
+        constantStrings.size,
+        successful,
+        attempts
+      ).mkString("", ";", "\n")
+    )
+    logStream.close()
+
+    resultStream.close()
   }
 
   class SinkInfo(

@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Refactored and optimized ClassLoaderFinder">
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="ClassLoaderFinder now also finds class loadings">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/debugging/Dumper.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/debugging/Dumper.scala" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/helper/ClassLoaderFinder.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/helper/ClassLoaderFinder.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -230,7 +231,7 @@
       <workItem from="1646943468765" duration="8936000" />
       <workItem from="1647089972971" duration="20200000" />
       <workItem from="1647448727971" duration="23872000" />
-      <workItem from="1647526746222" duration="2966000" />
+      <workItem from="1647526746222" duration="14638000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -260,7 +261,14 @@
       <option name="project" value="LOCAL" />
       <updated>1647527674015</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="ClassLoaderFinder now also finds class loadings">
+      <created>1647530018069</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1647530018069</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -318,7 +326,8 @@
     <MESSAGE value="Refactored ClassLoaderFinder and fixed DexClassLoaderAnalysis" />
     <MESSAGE value="Implementing SlicingClassAnalysis" />
     <MESSAGE value="Refactored and optimized ClassLoaderFinder" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactored and optimized ClassLoaderFinder" />
+    <MESSAGE value="ClassLoaderFinder now also finds class loadings" />
+    <option name="LAST_COMMIT_MESSAGE" value="ClassLoaderFinder now also finds class loadings" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
