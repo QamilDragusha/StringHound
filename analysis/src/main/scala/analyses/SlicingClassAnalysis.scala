@@ -15,33 +15,19 @@ import org.opalj._
 import org.opalj.ai.domain.PerformAI
 import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
 import org.opalj.ai.{AIResult, ValueOrigin}
-import org.opalj.ba.{
-  CLASS,
-  CODE,
-  CodeAttributeBuilder,
-  CodeElement,
-  FIELD,
-  FIELDS,
-  METHOD,
-  METHODS,
-  PUBLIC,
-  STATIC,
-  toDA
-}
+import org.opalj.ba.{CLASS, CODE, CodeAttributeBuilder, CodeElement, FIELD, FIELDS, METHOD, METHODS, PUBLIC, STATIC, toDA}
 import org.opalj.bc.Assembler
 import org.opalj.bi.ACC_PUBLIC
 import org.opalj.br.analyses.{Project, StringConstantsInformationKey}
 import org.opalj.br.instructions.{MethodInvocationInstruction, _}
 import org.opalj.br.{PCInMethod, _}
 import org.opalj.collection.immutable.{ConstArray, RefArray}
-import org.opalj.slicing.{
-  DeobfuscationSlicer,
-  ParameterUsageException,
-  SlicingConfiguration
-}
+import org.opalj.slicing.{DeobfuscationSlicer, ParameterUsageException, SlicingConfiguration}
 import org.opalj.util.InMemoryAndURLClassLoader
 
 import scala.io.Source
+import extensions.HashExtensions
+import extensions.HashExtensions.HashExtension
 
 class SlicingClassAnalysis(
     val project: Project[URL],
@@ -153,9 +139,10 @@ class SlicingClassAnalysis(
     val classLoaderFinder = new ClassLoaderFinder(project)
 
     val classLoaderInstatiations = classLoaderFinder.findClassLoaderInstantiations()
+    // TODO: Das bringt nichts??
     val classLoaderUsages = classLoaderFinder.findClassLoaderUsages()
 
-    val methodInstructionsToAnalyze = classLoaderUsages
+    val methodInstructionsToAnalyze = classLoaderInstatiations //concatTransitive classLoaderUsages
 
     println("printed methodInstructionsInstatiatingClassLoaders")
 
@@ -165,8 +152,6 @@ class SlicingClassAnalysis(
       System.setOut(out)
       println("Methods to slice: " + methodInstructionsToAnalyze.size)
       System.setOut(devNullPrintStream)
-
-
 
       val cleanTimer = new Timer()
       cleanTimer.schedule(cleanTask, 1000, 120000)
@@ -203,7 +188,7 @@ class SlicingClassAnalysis(
 
             val instruction = methodBody.instructions(pc)
 
-            println("mathcing instruction " + instruction)
+            println("\n\n\nmathcing instruction " + instruction)
 
             instruction.opcode match {
               // Einziger relevante Fall
@@ -221,7 +206,7 @@ class SlicingClassAnalysis(
                       parameterType
                     ) ||  parameterType == ObjectType.Object || parameterType == ObjectType("java/nio/ByteBuffer")
                   ) {
-                    println("\n\n\ntypeChecked: " + parameterType)
+                    println("typeChecked: " + parameterType)
 
                     // QAMIL: DUMP ANOTHER METHOD ########
                     Dumper.dumpMethod(
@@ -376,6 +361,15 @@ class SlicingClassAnalysis(
               buildMethodForOrigin(_, sinkInfo, project, method: Method, result)
             )
         }
+        // TODO: Nochmal schauen, ob das anders gehandelt werden muss
+        else if ( v.allValues
+          .exists(p => p.upperTypeBound.containsId(ObjectType("java/nio/ByteBuffer").id))) {
+          result.domain
+            .originsIterator(op)
+            .foreach(
+              buildMethodForOrigin(_, sinkInfo, project, method: Method, result)
+            )
+        }
 
       case result.domain.MultipleReferenceValues(s) ⇒
         s.foreach {
@@ -388,7 +382,7 @@ class SlicingClassAnalysis(
             )
         }
       case e ⇒
-        print(e)
+        print("processOrigins wont process " + e)
     }
     //                    domain.foreachOrigin(op, buildMethodForOrigin(_))
   }
@@ -431,10 +425,10 @@ class SlicingClassAnalysis(
         println("Built-target instruction: " + ins)
         ins.opcode match {
           // QAMIL: War vorher aus irgendeinem Grund nur Invokespeacial
-          case INVOKESPECIAL.opcode | INVOKEVIRTUAL.opcode ⇒
+          case INVOKESPECIAL.opcode | INVOKEVIRTUAL.opcode | INVOKESTATIC.opcode ⇒
             // HIER DEN STRING / BYTEARRAY nachverfolgen, welcher dem ClassLoader übergeben wird
 
-            println("MATCHED Invokespecial or virtual")
+            println("MATCHED Invocation")
 
             val mii = ins.asMethodInvocationInstruction
             val hasBaseOrStringParam =
@@ -519,8 +513,10 @@ class SlicingClassAnalysis(
           buildMethod(method, origin, result, sinkInfo.sinkPC)
 
         if (builtMethodTemplate isDefined) {
-          println("builtMethodTemplate defined")
           val modifiedMethod = builtMethodTemplate.get
+
+          //qamil ##### DUMP
+          Dumper.dumpMethodTemplate(builtMethodTemplate.get)
           //                        val supertype = if (modifiedMethod.isStatic) Some(ObjectType("java/lang/Object")) else methodClassFile.superclassType
 
           val neededInterfaces = findInvokedInterfaceMethodsInSlice(
@@ -534,8 +530,6 @@ class SlicingClassAnalysis(
               interfaceTypes = neededInterfaces
             )
 
-          //QAMIL: Könnte das hier ein vollständiger Code sein? -> Dumpen
-          // Dumper.dumpModifiedClassFile(modifiedClass, method)
 
           val linkedMethod = modifiedClass.methods
             .filter(m =>
@@ -765,16 +759,14 @@ class SlicingClassAnalysis(
           case _ =>
         }
     }
-    val m = slicer.buildMethodFromSlice
+    val m = slicer.buildMethodFromSlice()
 
-    // QAMIL : Gibt einen Überblick, muss später raus (=> Slicing.StringLeaker ist wohl kein Teil des ursprünglichen Programms)
-    Dumper.dumpSlicedMethod(m, method)
 
     if (
       // Qamil: Sobald einer der ParameterTypen keinem CharSequenceObjectTypes entspricht, wird das MethodTemplate verworfen. WARUM?
       m.descriptor.parameterTypes.exists(!typeIsOrHoldsCharSequenceObjectType(_)(project.classHierarchy))
     ) {
-      println("buildMethod returns noting")
+      println("buildMethod would return nothing")
       usesParams.incrementAndGet()
       //(None, str)
       // qamil: Testen, was passiert, wenn wir ParameterTypen einfach so weitergeben. Klappt das so oder muss es angepasst werden?

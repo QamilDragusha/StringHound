@@ -7,15 +7,18 @@ import java.io.{File, FileWriter}
 
 object Dumper {
 
+  /// Preference flags to configure the dumping
+  private val allowAnyDumping = false
+
 
   private val classFiles = false
   private val slicedMethods = false
 
 
-  private val arbitraryMethods = false
-  private val methodTemplates = false
-  private val codeDirectly = false
-  private val arbitraryClassFiles = false
+  private val arbitraryMethods = true
+  private val methodTemplates = true
+  private val codeDirectly = true
+  private val arbitraryClassFiles = true
 
   private var uniqueId : Int = 0
 
@@ -40,6 +43,7 @@ object Dumper {
   }
 
   def dumpCode(code: Code, fileName: String, resultSubDirectory: String = "code/", message: String = null, force: Boolean = false) : Unit = {
+    if (!allowAnyDumping) return
     if (!codeDirectly && !force) return
 
 
@@ -67,6 +71,7 @@ object Dumper {
   }
 
   def dumpMethod(method: Method, resultSubDirectory: String = "methods/", message: String = null) : Unit = {
+    if (!allowAnyDumping) return
     if (!arbitraryMethods ) return
     val fileName =  method.classFile.fqn + "--FROM--" +  method.name
 
@@ -76,6 +81,7 @@ object Dumper {
   }
 
   def dumpMethodTemplate(methodTemplate: MethodTemplate, resultSubDirectory: String = "methodTemplates/", message: String = null) : Unit = {
+    if (!allowAnyDumping) return
     if (!methodTemplates) return
 
     val fileName = methodTemplate.name
@@ -84,6 +90,7 @@ object Dumper {
   }
 
   def dumpClassFile(classFile: ClassFile, resultSubDirectory: String = "classFiles/", message: String = null) : Unit = {
+    if (!allowAnyDumping) return
     if (!arbitraryClassFiles) return
 
     val fileDirectory = getFileDirectory(resultSubDirectory)
@@ -145,6 +152,7 @@ object Dumper {
   }
 
   def dumpModifiedClassFile(modifiedClassFile: ClassFile, initialMethod: Method, resultSubDirectory: String = "slicedClassDumps/") : Unit = {
+    if (!allowAnyDumping) return
     if (!classFiles) return
 
     val fileDirectory = StringDecryption.outputDir + "/results/" + resultSubDirectory
@@ -201,6 +209,7 @@ object Dumper {
 
 
   def dumpSlicedMethod(slicedMethod: MethodTemplate, originalMethod: Method, resultSubDirectory: String = "slicedDumps/") : Unit = {
+    if (!allowAnyDumping) return
     if (!slicedMethods) return
     if (slicedMethod.body isDefined) {
       println("Sliced result of " + originalMethod)
