@@ -6,7 +6,6 @@ import customBRClasses.leakers.StringLeaker
 import org.opalj.ai._
 import org.opalj.ai.domain.{RecordDefUse, ThrowAllPotentialExceptionsConfiguration}
 import org.opalj.ba.{AccessModifier, CLASS, CODE, CodeElement, FIELD, FIELDS, InsertionPosition, LabeledCode, METHOD, METHODS, PUBLIC, STATIC}
-import org.opalj.bi
 import org.opalj.bi.ACC_STATIC
 import org.opalj.br._
 import org.opalj.br.instructions._
@@ -14,15 +13,16 @@ import org.opalj.collection.immutable.{BitArraySet, IntArraySet, IntTrieSet, Ref
 import org.opalj.collection.mutable.IntQueue
 import org.opalj.control.iterateUntil
 
+/*
 
 // Assumption: slicing criterion operates on stack not on local
-class DeobfuscationSlicer(
+class ClassDeobfuscationSlicer(
                            private val method: Method,
                            private val pcsOfSlicingCriterion: IntArraySet,
                            private val result: AIResult {
                              val domain: Domain with RecordDefUse
                            },
-                          // QAMIL: Locaction of interest?
+                           // QAMIL: Locaction of interest?
                            private val loi: Int,
                            private val noParameterUsage: Boolean,
                            private val includeLoi: Boolean
@@ -68,7 +68,7 @@ class DeobfuscationSlicer(
     }
   }
 
-  def buildMethodFromSlice(): MethodTemplate = {
+  def buildMethodFromSlice(typeOfInterest: ObjectType): MethodTemplate = {
     if ((newInstructions eq null) || (slicedPCs eq null)) {
       doSlice()
     }
@@ -204,41 +204,7 @@ class DeobfuscationSlicer(
     }
     labeledCode.insert(pcOfSlicingCriterion, InsertionPosition.Before, beforeInstructions ++ afterInstructions)
 
-    if (maxSliced == pcOfSlicingCriterion) { // position of loi is after it, but nothing happens or before it
-      labeledCode.insert(maxSliced, InsertionPosition.After,
-        Seq(
-          //                    CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
-          CodeElement.instructionToInstructionElement(
-            INVOKESTATIC(
-              "slicing/StringLeaker",
-              isInterface = false,
-              "logString", "(Ljava/lang/CharSequence;)V"
-            )
-          ),
-          CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
-          ReturnInstruction(method.returnType)
-        ))
-    } else {
-      labeledCode.insert(pcOfSlicingCriterion, InsertionPosition.After,
-        Seq(
-          CodeElement.instructionToInstructionElement(DUP),
-          CodeElement.instructionToInstructionElement(ASTORE(maxLocals))
-        ))
-      labeledCode.insert(maxSliced, InsertionPosition.After,
-        Seq(
-          CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
-          CodeElement.instructionToInstructionElement(
-            INVOKESTATIC(
-              "slicing/StringLeaker",
-              isInterface = false,
-              "logString", "(Ljava/lang/CharSequence;)V"
-            )
-          ),
-          CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
-          ReturnInstruction(method.returnType)
-        ))
-    }
-
+    insertResultValueLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode, typeOfInterest)
 
     val newCode = labeledCode.result
 
@@ -278,6 +244,88 @@ class DeobfuscationSlicer(
       MethodDescriptor.apply(filteredParameters, method.returnType).toJVMDescriptor,
       fixedCode)
       .result(cf.version, cf.thisType)._1
+  }
+
+  private def insertResultValueLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode, objectType: ObjectType) : Unit = {
+    if (objectType == ObjectType.String) {
+      insertStringResultLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode)
+    } else if (objectType == ObjectType("java/nio/ByteBuffer")) {
+      insertByteBufferResultLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode)
+    }
+  }
+
+  private def insertByteBufferResultLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode) : Unit = {
+    if (maxSliced == pcOfSlicingCriterion) { // position of loi is after it, but nothing happens or before it
+      labeledCode.insert(maxSliced, InsertionPosition.After,
+        Seq(
+          //                    CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
+          CodeElement.instructionToInstructionElement(
+            INVOKESTATIC(
+              "slicing/ByteBufferLeaker",
+              isInterface = false,
+              "logByteBuffer", "(Ljava/nio/ByteBuffer;)V"
+            )
+          ),
+          CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
+          ReturnInstruction(method.returnType)
+        ))
+    } else {
+      labeledCode.insert(pcOfSlicingCriterion, InsertionPosition.After,
+        Seq(
+          CodeElement.instructionToInstructionElement(DUP),
+          CodeElement.instructionToInstructionElement(ASTORE(maxLocals))
+        ))
+      labeledCode.insert(maxSliced, InsertionPosition.After,
+        Seq(
+          CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
+          CodeElement.instructionToInstructionElement(
+            INVOKESTATIC(
+              "slicing/ByteBufferLeaker",
+              isInterface = false,
+              "logByteBuffer", "(Ljava/nio/ByteBuffer;)V"
+            )
+          ),
+          CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
+          ReturnInstruction(method.returnType)
+        ))
+    }
+  }
+
+  private def insertStringResultLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode) : Unit = {
+    if (maxSliced == pcOfSlicingCriterion) { // position of loi is after it, but nothing happens or before it
+      labeledCode.insert(maxSliced, InsertionPosition.After,
+        Seq(
+          //                    CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
+          CodeElement.instructionToInstructionElement(
+            INVOKESTATIC(
+              "slicing/StringLeaker",
+              isInterface = false,
+              "logString", "(Ljava/lang/CharSequence;)V"
+            )
+          ),
+          CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
+          ReturnInstruction(method.returnType)
+        ))
+    } else {
+      labeledCode.insert(pcOfSlicingCriterion, InsertionPosition.After,
+        Seq(
+          CodeElement.instructionToInstructionElement(DUP),
+          CodeElement.instructionToInstructionElement(ASTORE(maxLocals))
+        ))
+      labeledCode.insert(maxSliced, InsertionPosition.After,
+        Seq(
+          CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
+          CodeElement.instructionToInstructionElement(
+            INVOKESTATIC(
+              "slicing/StringLeaker",
+              isInterface = false,
+              "logString", "(Ljava/lang/CharSequence;)V"
+            )
+          ),
+          CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
+          ReturnInstruction(method.returnType)
+        ))
+    }
   }
 
   def buildBackwardsReachable(): BitArraySet = {
@@ -860,3 +908,4 @@ trait SlicingConfiguration extends ThrowAllPotentialExceptionsConfiguration {
 
 case class ParameterUsageException(pcsOfSlicingCriterion: IntArraySet, method: Method, usedParameter: Int)
   extends RuntimeException
+*/
