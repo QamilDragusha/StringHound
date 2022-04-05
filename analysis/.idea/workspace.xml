@@ -4,13 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Created / Extracted first BRClasses">
-      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidAssetManager.scala" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidContext.scala" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/ByteArrayOutputStream.scala" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/ByteBuffer.scala" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/InputStream.scala" afterDir="false" />
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Added custom library BR Classes">
+      <change afterPath="$PROJECT_DIR$/src/main/java/android/content/Context.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/android/content/res/AssetManager.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/JavaClassLoader.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules/deobfuscator.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/deobfuscator.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidAssetManager.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidAssetManager.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidContext.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidContext.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/ByteArrayOutputStream.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/CBRByteArrayOutputStream.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/ByteBuffer.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/CBRByteBuffer.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/InputStream.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/CBRInputStream.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/debugging/Dumper.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/debugging/Dumper.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/ClassDeobfuscationSlicer.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/ClassDeobfuscationSlicer.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/DeobfuscationSlicer.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/DeobfuscationSlicer.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +41,7 @@
       <list>
         <option value="Package Object" />
         <option value="Scala Trait" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -163,6 +172,9 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\glanz\git\StringHound\analysis" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/resources" />
+    </key>
   </component>
   <component name="RunManager" selected="Application.ClassStringDecryption">
     <configuration name="ClassDecryption" type="Application" factoryName="Application" nameIsGenerated="true">
@@ -230,6 +242,9 @@
       <workItem from="1647967579222" duration="12224000" />
       <workItem from="1648138572163" duration="5129000" />
       <workItem from="1648497429226" duration="4202000" />
+      <workItem from="1648575406763" duration="15138000" />
+      <workItem from="1648731676845" duration="21065000" />
+      <workItem from="1649187252560" duration="1112000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -287,7 +302,14 @@
       <option name="project" value="LOCAL" />
       <updated>1648213780278</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Added custom library BR Classes">
+      <created>1648575431826</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1648575431826</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -349,7 +371,8 @@
     <MESSAGE value="Refactored ClassSlicingAnalysis to only analyze relevant instructions" />
     <MESSAGE value="Implemented HashExtension and small code changes" />
     <MESSAGE value="Created / Extracted first BRClasses" />
-    <option name="LAST_COMMIT_MESSAGE" value="Created / Extracted first BRClasses" />
+    <MESSAGE value="Added custom library BR Classes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added custom library BR Classes" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

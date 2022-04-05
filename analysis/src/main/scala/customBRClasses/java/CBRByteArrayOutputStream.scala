@@ -3,10 +3,10 @@ package customBRClasses.java
 import customBRClasses.CustomBRClass
 import org.opalj.ba.{CLASS, CODE, FIELDS, METHOD, METHODS, PUBLIC, STATIC}
 import org.opalj.{bi, br}
-import org.opalj.br.instructions.{NEWARRAY, RETURN}
+import org.opalj.br.instructions.{ALOAD_0, ARETURN, INVOKESPECIAL, NEWARRAY, POP, RETURN}
 import org.opalj.br.{ArrayType, ClassFile, FieldTypes, MethodDescriptor, NoFieldTypes, ObjectType, VoidType}
 
-object ByteArrayOutputStream extends CustomBRClass {
+object CBRByteArrayOutputStream extends CustomBRClass {
 
   private def thisType = "java/io/ByteArrayOutputStream"
 
@@ -24,6 +24,8 @@ object ByteArrayOutputStream extends CustomBRClass {
           "<init>",
           MethodDescriptor.NoArgsAndReturnVoid.toJVMDescriptor,
           CODE(
+            ALOAD_0,
+            INVOKESPECIAL(ObjectType.Object, isInterface = false, "<init>", MethodDescriptor.NoArgsAndReturnVoid),
             RETURN,
           )
         ),
@@ -32,6 +34,9 @@ object ByteArrayOutputStream extends CustomBRClass {
           "write",
           MethodDescriptor(FieldTypes(ArrayType(1, ObjectType.Byte), ObjectType.Integer, ObjectType.Integer),VoidType).toJVMDescriptor,
           CODE(
+            POP,
+            POP,
+            POP,
             RETURN,
           ),
         ),
@@ -53,7 +58,7 @@ object ByteArrayOutputStream extends CustomBRClass {
           MethodDescriptor.withNoArgs(ArrayType(1, ObjectType.Byte)).toJVMDescriptor,
           CODE(
             NEWARRAY(8), // Array Type Code 8 => Byte
-            RETURN,
+            ARETURN,
           ),
         ),
       ),

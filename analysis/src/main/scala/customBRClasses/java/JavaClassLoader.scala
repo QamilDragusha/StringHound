@@ -1,14 +1,14 @@
-package customBRClasses.androidLib
+package customBRClasses.java
 
 import customBRClasses.CustomBRClass
 import org.opalj.ba.{CLASS, CODE, FIELDS, METHOD, METHODS, PRIVATE, PUBLIC, STATIC}
 import org.opalj.bi
-import org.opalj.br.instructions.{ALOAD_0, DUP, INVOKESPECIAL, NEW, RETURN}
+import org.opalj.br.instructions.{ALOAD_0, INVOKESPECIAL, RETURN}
 import org.opalj.br.{ClassFile, MethodDescriptor, ObjectType}
 
-object AndroidContext extends CustomBRClass {
+object JavaClassLoader extends CustomBRClass {
 
-  private def thisType = "android/content/Context";
+  private def thisType = "java/lang/ClassLoader"
 
   override def objectType: ObjectType = ObjectType(thisType)
 
@@ -28,18 +28,7 @@ object AndroidContext extends CustomBRClass {
             INVOKESPECIAL(ObjectType.Object, isInterface = false, "<init>", MethodDescriptor.NoArgsAndReturnVoid),
             RETURN,
           )
-        ),
-        METHOD(
-          PUBLIC,
-          "getAssets",
-          MethodDescriptor.withNoArgs(AndroidAssetManager.objectType).toJVMDescriptor,
-          CODE(
-            NEW(AndroidAssetManager.objectType),
-            DUP,
-            INVOKESPECIAL(AndroidAssetManager.objectType,isInterface =  false,"<init>",MethodDescriptor.NoArgsAndReturnVoid),
-            RETURN,
-          )
-        ),
+        )
       ),
     ).toBR._1
   }

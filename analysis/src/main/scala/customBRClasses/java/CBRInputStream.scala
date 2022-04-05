@@ -3,10 +3,20 @@ package customBRClasses.java
 import customBRClasses.CustomBRClass
 import org.opalj.ba.{CLASS, CODE, FIELDS, METHOD, METHODS, PUBLIC, STATIC}
 import org.opalj.bi
-import org.opalj.br.instructions.{BASTORE, BIPUSH, IRETURN, L2I, RETURN, SIPUSH}
+import org.opalj.br.instructions.{
+  ALOAD_0,
+  BASTORE,
+  BIPUSH,
+  INVOKESPECIAL,
+  IRETURN,
+  L2I,
+  POP,
+  RETURN,
+  SIPUSH
+}
 import org.opalj.br.{ArrayType, ClassFile, MethodDescriptor, ObjectType}
 
-object InputStream extends CustomBRClass {
+object CBRInputStream extends CustomBRClass {
 
   private def thisType = "java/io/InputStream"
 
@@ -24,32 +34,43 @@ object InputStream extends CustomBRClass {
           "<init>",
           MethodDescriptor.NoArgsAndReturnVoid.toJVMDescriptor,
           CODE(
-            RETURN,
+            ALOAD_0,
+            INVOKESPECIAL(
+              ObjectType.Object,
+              isInterface = false,
+              "<init>",
+              MethodDescriptor.NoArgsAndReturnVoid
+            ),
+            RETURN
           )
         ),
         METHOD(
           PUBLIC,
           "read",
-          MethodDescriptor(ArrayType(1,ObjectType.Byte), ObjectType.Integer).toJVMDescriptor,
+          MethodDescriptor(
+            ArrayType(1, ObjectType.Byte),
+            ObjectType.Integer
+          ).toJVMDescriptor,
           CODE(
             // Ich bekomme einen ArrayRef, der liegt auf dem Stack
-            SIPUSH(0), // index
-            BIPUSH(1), // value
-            BASTORE, // arrayref, index, value -> ...
+            // SIPUSH(0), // index
+            // BIPUSH(1), // value
+            // BASTORE, // arrayref, index, value -> ...
+            POP,
             SIPUSH(0),
             L2I, // JUST LAZY; change to directly push int if possible
-            IRETURN,
-          ),
+            IRETURN
+          )
         ),
         METHOD(
           PUBLIC,
           "close",
           MethodDescriptor.NoArgsAndReturnVoid.toJVMDescriptor,
           CODE(
-            RETURN,
+            RETURN
           )
-        ),
-      ),
+        )
+      )
     ).toBR._1
   }
 

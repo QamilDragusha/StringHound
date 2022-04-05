@@ -3,10 +3,10 @@ package customBRClasses.java
 import customBRClasses.CustomBRClass
 import org.opalj.ba.{CLASS, CODE, FIELDS, METHOD, METHODS, PUBLIC, STATIC}
 import org.opalj.bi
-import org.opalj.br.instructions.{NEW, RETURN}
+import org.opalj.br.instructions.{ALOAD_0, ARETURN, ASTORE_0, DUP, INVOKESPECIAL, NEW, RETURN}
 import org.opalj.br.{ArrayType, ClassFile, MethodDescriptor, ObjectType}
 
-object ByteBuffer extends CustomBRClass {
+object CBRByteBuffer extends CustomBRClass {
 
   private def thisType = "java/nio/ByteBuffer"
 
@@ -21,11 +21,23 @@ object ByteBuffer extends CustomBRClass {
       methods = METHODS(
         METHOD(
           STATIC.PUBLIC,
+          "<init>",
+          MethodDescriptor.NoArgsAndReturnVoid.toJVMDescriptor,
+          CODE(
+            ALOAD_0,
+            INVOKESPECIAL(ObjectType.Object, isInterface = false, "<init>", MethodDescriptor.NoArgsAndReturnVoid),
+            RETURN,
+          )
+        ),
+        METHOD(
+          STATIC.PUBLIC,
           "wrap",
           MethodDescriptor(ArrayType(1, ObjectType.Byte), this.objectType).toJVMDescriptor,
           CODE(
             NEW(this.objectType),
-            RETURN,
+            DUP,
+            INVOKESPECIAL(this.objectType, isInterface = false, "<init>", methodDescriptor = MethodDescriptor.NoArgsAndReturnVoid),
+            ARETURN,
           ),
         ),
       ),

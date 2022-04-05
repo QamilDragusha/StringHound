@@ -8,17 +8,17 @@ import java.io.{File, FileWriter}
 object Dumper {
 
   /// Preference flags to configure the dumping
-  private val allowAnyDumping = false
+  private val allowAnyDumping = true
 
 
   private val classFiles = false
   private val slicedMethods = false
 
 
-  private val arbitraryMethods = true
+  private val arbitraryMethods = false
   private val methodTemplates = true
-  private val codeDirectly = true
-  private val arbitraryClassFiles = true
+  private val codeDirectly = false
+  private val arbitraryClassFiles = false
 
   private var uniqueId : Int = 0
 

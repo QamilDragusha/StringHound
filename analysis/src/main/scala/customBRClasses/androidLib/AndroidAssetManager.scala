@@ -1,10 +1,10 @@
 package customBRClasses.androidLib
 
 import customBRClasses.CustomBRClass
-import customBRClasses.java.InputStream
+import customBRClasses.java.CBRInputStream
 import org.opalj.ba.{CLASS, CODE, FIELDS, METHOD, METHODS, PUBLIC, STATIC}
 import org.opalj.bi
-import org.opalj.br.instructions.{INVOKESPECIAL, NEW, RETURN}
+import org.opalj.br.instructions.{ALOAD_0, DUP, INVOKESPECIAL, NEW, RETURN}
 import org.opalj.br.{ClassFile, MethodDescriptor, ObjectType}
 
 object AndroidAssetManager extends CustomBRClass {
@@ -25,16 +25,19 @@ object AndroidAssetManager extends CustomBRClass {
           "<init>",
           MethodDescriptor.NoArgsAndReturnVoid.toJVMDescriptor,
           CODE(
+            ALOAD_0,
+            INVOKESPECIAL(ObjectType.Object, isInterface = false, "<init>", MethodDescriptor.NoArgsAndReturnVoid),
             RETURN,
           )
         ),
         METHOD(
           PUBLIC,
           "open",
-          MethodDescriptor(ObjectType.String, InputStream.objectType).toJVMDescriptor,
+          MethodDescriptor(ObjectType.String, CBRInputStream.objectType).toJVMDescriptor,
           CODE(
-            NEW(InputStream.objectType),
-            INVOKESPECIAL(InputStream.objectType,false,"<init>",MethodDescriptor.NoArgsAndReturnVoid),
+            NEW(CBRInputStream.objectType),
+            DUP,
+            INVOKESPECIAL(CBRInputStream.objectType,isInterface = false,"<init>",MethodDescriptor.NoArgsAndReturnVoid),
             RETURN,
           )
         ),

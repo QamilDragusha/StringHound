@@ -824,39 +824,3 @@ class DeobfuscationSlicer(
 object DeobfuscationSlicer {
   def buildTargetClass(): ClassFile = StringLeaker.classFile
 }
-
-trait SlicingConfiguration extends ThrowAllPotentialExceptionsConfiguration {
-
-  override def throwExceptionsOnMethodCall: ExceptionsRaisedByCalledMethod = {
-    ExceptionsRaisedByCalledMethods.AllExplicitlyHandled
-  }
-
-  override def throwNullPointerExceptionOnMethodCall: Boolean = false
-
-  override def throwNullPointerExceptionOnFieldAccess: Boolean = false
-
-  override def throwNullPointerExceptionOnArrayAccess: Boolean = false
-
-  override def throwArrayIndexOutOfBoundsException: Boolean = false
-
-  override def throwNullPointerExceptionOnThrow: Boolean = false
-
-  override def throwClassCastException: Boolean = false
-
-  override def abortProcessingExceptionsOfCalledMethodsOnUnknownException: Boolean = false
-
-  override def abortProcessingThrownExceptionsOnUnknownException: Boolean = false
-
-  override def throwArithmeticExceptions: Boolean = false
-
-  override def throwNullPointerExceptionOnMonitorAccess: Boolean = true
-
-  override def throwArrayStoreException: Boolean = false
-
-  override def throwNegativeArraySizeException: Boolean = false
-
-  override def throwClassNotFoundException: Boolean = false
-}
-
-case class ParameterUsageException(pcsOfSlicingCriterion: IntArraySet, method: Method, usedParameter: Int)
-  extends RuntimeException

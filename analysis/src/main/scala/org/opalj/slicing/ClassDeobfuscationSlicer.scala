@@ -2,18 +2,21 @@ package org.opalj.slicing
 
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 
+import customBRClasses.androidLib.AndroidContext
+import customBRClasses.java.JavaClassLoader
 import customBRClasses.leakers.StringLeaker
 import org.opalj.ai._
 import org.opalj.ai.domain.{RecordDefUse, ThrowAllPotentialExceptionsConfiguration}
 import org.opalj.ba.{AccessModifier, CLASS, CODE, CodeElement, FIELD, FIELDS, InsertionPosition, LabeledCode, METHOD, METHODS, PUBLIC, STATIC}
 import org.opalj.bi.ACC_STATIC
 import org.opalj.br._
+import org.opalj.br.MethodTemplate
 import org.opalj.br.instructions._
 import org.opalj.collection.immutable.{BitArraySet, IntArraySet, IntTrieSet, RefArray}
 import org.opalj.collection.mutable.IntQueue
 import org.opalj.control.iterateUntil
 
-/*
+
 
 // Assumption: slicing criterion operates on stack not on local
 class ClassDeobfuscationSlicer(
@@ -68,7 +71,34 @@ class ClassDeobfuscationSlicer(
     }
   }
 
+  def buildMethodTemplate() : MethodTemplate = {
+
+    val methodCode = Seq(
+      NEW(AndroidContext.objectType.fqn),
+      ASTORE_0,
+      ALOAD_0,
+      INVOKESPECIAL(AndroidContext.objectType.fqn, isInterface = false, "<init>", MethodDescriptor.withNoArgs(VoidType).toJVMDescriptor),
+      ACONST_NULL,
+      ARETURN,
+    )
+
+    val labeledCode = LabeledCode(Code.apply(100,100,methodCode.toArray,NoExceptionHandlers,NoAttributes),{pc => true}).result
+    var usedParams = BitArraySet.empty
+    val filteredParameters = RefArray.from(localVariableParameterIndexMap(method.descriptor, method.isStatic)
+      .filter {
+        case (index, ft) ⇒
+          usedParams.contains(index)
+      }.values.toArray.asInstanceOf[Array[AnyRef]])
+    METHOD(new AccessModifier(ACC_STATIC.mask), method.name,
+      MethodDescriptor.apply(filteredParameters, method.returnType).toJVMDescriptor,
+      labeledCode)
+      .result(cf.version, cf.thisType)._1
+  }
+
   def buildMethodFromSlice(typeOfInterest: ObjectType): MethodTemplate = {
+
+   // return buildMethodTemplate()
+
     if ((newInstructions eq null) || (slicedPCs eq null)) {
       doSlice()
     }
@@ -141,6 +171,28 @@ class ClassDeobfuscationSlicer(
         ),
         slicedPCs.contains(_)
       )
+
+    /// QAMIL CAUTION: NUR TESTWEISE FÜR INMEMORYDEXCLASSLOADER
+    /*
+
+    labeledCode.insert(0, InsertionPosition.Before, Seq(
+      //LoadLocalVariableInstruction(AndroidContext.objectType, 0),
+      NOP,
+      //NEW(AndroidContext.objectType.fqn),
+      //NEW(AndroidContext.objectType.fqn),
+      //NEW(AndroidContext.objectType.fqn),
+      //NEW(AndroidContext.objectType.fqn),
+      NEW(AndroidContext.objectType.fqn),
+      ASTORE_0,
+      ALOAD_0,
+      INVOKESPECIAL(AndroidContext.objectType.fqn, isInterface = false, "<init>", MethodDescriptor.withNoArgs(VoidType).toJVMDescriptor),
+      //ACONST_NULL,
+    ))
+    */
+
+
+    //// QAMIL
+
     if (filteredExceptionHandlers.exists(_.handlerPC <= minSliced)) {
       if (method.name == "<init>")
         labeledCode.insert(0, InsertionPosition.Before,
@@ -208,7 +260,6 @@ class ClassDeobfuscationSlicer(
 
     val newCode = labeledCode.result
 
-
     val newCodeLength = newCode.instructions.length
     var skip = 0
     val instructionsWithFixedOffsets = newCode.instructions.iterator.zipWithIndex.flatMap {
@@ -239,6 +290,8 @@ class ClassDeobfuscationSlicer(
           case _ ⇒ Seq(ins)
         }
     }.toArray
+
+
     val fixedCode = newCode.copy(instructions = instructionsWithFixedOffsets).MAXLOCALS(maxLocals + 2)
     METHOD(new AccessModifier(accessFlags), name,
       MethodDescriptor.apply(filteredParameters, method.returnType).toJVMDescriptor,
@@ -256,9 +309,11 @@ class ClassDeobfuscationSlicer(
 
   private def insertByteBufferResultLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode) : Unit = {
     if (maxSliced == pcOfSlicingCriterion) { // position of loi is after it, but nothing happens or before it
+
       labeledCode.insert(maxSliced, InsertionPosition.After,
         Seq(
           //                    CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
+          /*
           CodeElement.instructionToInstructionElement(
             INVOKESTATIC(
               "slicing/ByteBufferLeaker",
@@ -266,18 +321,24 @@ class ClassDeobfuscationSlicer(
               "logByteBuffer", "(Ljava/nio/ByteBuffer;)V"
             )
           ),
+          */
           CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
           ReturnInstruction(method.returnType)
         ))
+
+
     } else {
       labeledCode.insert(pcOfSlicingCriterion, InsertionPosition.After,
         Seq(
           CodeElement.instructionToInstructionElement(DUP),
           CodeElement.instructionToInstructionElement(ASTORE(maxLocals))
         ))
+
+
       labeledCode.insert(maxSliced, InsertionPosition.After,
         Seq(
           CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
+          /*
           CodeElement.instructionToInstructionElement(
             INVOKESTATIC(
               "slicing/ByteBufferLeaker",
@@ -285,9 +346,13 @@ class ClassDeobfuscationSlicer(
               "logByteBuffer", "(Ljava/nio/ByteBuffer;)V"
             )
           ),
+          */
+
           CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
           ReturnInstruction(method.returnType)
         ))
+
+
     }
   }
 
@@ -869,10 +934,6 @@ class ClassDeobfuscationSlicer(
 
 }
 
-object DeobfuscationSlicer {
-  def buildTargetClass(): ClassFile = StringLeaker.classFile
-}
-
 trait SlicingConfiguration extends ThrowAllPotentialExceptionsConfiguration {
 
   override def throwExceptionsOnMethodCall: ExceptionsRaisedByCalledMethod = {
@@ -908,4 +969,3 @@ trait SlicingConfiguration extends ThrowAllPotentialExceptionsConfiguration {
 
 case class ParameterUsageException(pcsOfSlicingCriterion: IntArraySet, method: Method, usedParameter: Int)
   extends RuntimeException
-*/

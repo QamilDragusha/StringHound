@@ -7,6 +7,13 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Timer, TimerTask}
 import classifier.{MethodClassifier, StringClassifier}
+import customBRClasses.androidLib.{AndroidAssetManager, AndroidContext}
+import customBRClasses.java.{
+  CBRByteArrayOutputStream,
+  CBRByteBuffer,
+  CBRInputStream,
+  JavaClassLoader
+}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
 import helper.ClassLoaderFinder
@@ -16,14 +23,31 @@ import org.opalj._
 import org.opalj.ai.domain.PerformAI
 import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
 import org.opalj.ai.{AIResult, ValueOrigin}
-import org.opalj.ba.{CLASS, CODE, CodeAttributeBuilder, CodeElement, FIELD, FIELDS, METHOD, METHODS, PUBLIC, STATIC, toDA}
+import org.opalj.ba.{
+  CLASS,
+  CODE,
+  CodeAttributeBuilder,
+  CodeElement,
+  FIELD,
+  FIELDS,
+  METHOD,
+  METHODS,
+  PUBLIC,
+  STATIC,
+  toDA
+}
 import org.opalj.bc.Assembler
 import org.opalj.bi.ACC_PUBLIC
 import org.opalj.br.analyses.{Project, StringConstantsInformationKey}
 import org.opalj.br.instructions.{MethodInvocationInstruction, _}
 import org.opalj.br.{PCInMethod, _}
 import org.opalj.collection.immutable.{ConstArray, RefArray}
-import org.opalj.slicing.{DeobfuscationSlicer, ParameterUsageException, SlicingConfiguration}
+import org.opalj.slicing.{
+  ClassDeobfuscationSlicer,
+  DeobfuscationSlicer,
+  ParameterUsageException,
+  SlicingConfiguration
+}
 import org.opalj.util.InMemoryAndURLClassLoader
 
 import java.nio.ByteBuffer
@@ -177,12 +201,12 @@ class SlicingClassAnalysis(
             programCounters.foreach { pc =>
               val instruction = methodBody.instructions(pc)
 
-              println("\n\n\nmathcing instruction " + instruction)
+              //println("\n\n\nmathcing instruction " + instruction)
 
               instruction.opcode match {
                 // Einziger relevante Fall
                 case INVOKESPECIAL.opcode =>
-                  println("invokeSpecial matched case")
+                  //println("invokeSpecial matched case")
                   val invoke = instruction.asMethodInvocationInstruction
                   val params = invoke.methodDescriptor.parameterTypes
                   val sig = invoke.methodDescriptor.toJava(invoke.name)
@@ -194,11 +218,12 @@ class SlicingClassAnalysis(
                       typeIsOrHoldsCharSequenceObjectType(
                         parameterType
                       ) || parameterType == ObjectType.Object ||
-                        // qamil TODO: In diesem Fall muss das so vermerkt wrerden, dass der Slicer dass dann berücksichtigen kann und den richtigen Leaker einbaut
-                        parameterType == ObjectType(
+                      // qamil TODO: In diesem Fall muss das so vermerkt wrerden, dass der Slicer das dann berücksichtigen kann und den richtigen Leaker einbaut
+                      parameterType == ObjectType(
                         "java/nio/ByteBuffer"
                       )
                     ) {
+                      println("\n\n\nmatching instruction " + instruction)
                       println("typeChecked: " + parameterType)
 
                       // QAMIL: DUMP ANOTHER METHOD ########
@@ -345,11 +370,17 @@ class SlicingClassAnalysis(
           v.allValues
             .exists(p => p.upperTypeBound.containsId(ObjectType.String.id))
         ) {
-
           result.domain
             .originsIterator(op)
             .foreach(
-              buildMethodForOrigin(_, sinkInfo, project, method: Method,ObjectType.String, result)
+              buildMethodForOrigin(
+                _,
+                sinkInfo,
+                project,
+                method: Method,
+                ObjectType.String,
+                result
+              )
             )
         }
         // TODO: Nochmal schauen, ob das anders gehandelt werden muss
@@ -362,7 +393,14 @@ class SlicingClassAnalysis(
           result.domain
             .originsIterator(op)
             .foreach(
-              buildMethodForOrigin(_, sinkInfo, project, method: Method, ObjectType("java/nio/ByteBuffer"), result)
+              buildMethodForOrigin(
+                _,
+                sinkInfo,
+                project,
+                method: Method,
+                ObjectType("java/nio/ByteBuffer"),
+                result
+              )
             )
         }
 
@@ -373,7 +411,14 @@ class SlicingClassAnalysis(
           case value ⇒
             //println("DOMAINMULTIPLEREFERENCEVALUES")
             value.origins.foreach(
-              buildMethodForOrigin(_, sinkInfo, project, method: Method,ObjectType.String, result)
+              buildMethodForOrigin(
+                _,
+                sinkInfo,
+                project,
+                method: Method,
+                ObjectType.String,
+                result
+              )
             )
         }
       case e ⇒
@@ -394,7 +439,7 @@ class SlicingClassAnalysis(
       project: Project[URL],
       method: Method,
       typeOfInterest: ObjectType,
-      result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] },
+      result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] }
   ): Unit = {
     // QAMIL : macht Opcode bei origin überhaupt Sinn? Sieht nämlich eher so aus, als sei das die
     // Nummer der Instruktion im Code, also ein Identifier für die richtige Instruktion
@@ -405,7 +450,7 @@ class SlicingClassAnalysis(
     Dumper.dumpMethod(
       method,
       "buildMethodForOrigin/",
-      "Origin at pc (" + origin + ")\nIstruction:\n" + result.code.instructions(
+      "Origin at pc (" + origin + ")\nInstruction:\n" + result.code.instructions(
         origin
       )
     )
@@ -465,7 +510,13 @@ class SlicingClassAnalysis(
             // LoI: Ist die Instanziierung
             // ParameterIndex ist SlicingCriterion
             // QAMIL: Moved that out of the condition
-            buildAndCallMethod(method, origin, result, sinkInfo, typeOfInterest)(project)
+            buildAndCallMethod(
+              method,
+              origin,
+              result,
+              sinkInfo,
+              typeOfInterest
+            )(project)
 
             if (
               hasBaseOrStringParam &&
@@ -477,7 +528,13 @@ class SlicingClassAnalysis(
           // QAMIL: Neu eingefügt, um im Beispiel vom DynamiteModule die String-Ursprünge zurückverfolgen zu können
           case GETSTATIC.opcode =>
             println("MATCHED GETSTATIC")
-            buildAndCallMethod(method, origin, result, sinkInfo, typeOfInterest)(project)
+            buildAndCallMethod(
+              method,
+              origin,
+              result,
+              sinkInfo,
+              typeOfInterest
+            )(project)
 
           case _ ⇒ println("MATCHED NOTHING")
           //println(body.instructions(origin))
@@ -498,7 +555,7 @@ class SlicingClassAnalysis(
       origin: ValueOrigin,
       result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] },
       sinkInfo: SinkInfo,
-      typeOfInterest: ObjectType,
+      typeOfInterest: ObjectType
   )(implicit project: Project[_]): AnyVal = {
     if (first) {
       allThreads = Thread.getAllStackTraces
@@ -514,7 +571,7 @@ class SlicingClassAnalysis(
         val methodClassFile = method.classFile
         // QAMIL: TODO: Was ist die genaue Aufgabe von accociatedMethodString? Nochmal rausfinden und umbenennen
         val (builtMethodTemplate, associatedMethodString) =
-          buildMethod(method, origin, result, sinkInfo.sinkPC)
+          buildMethod(method, origin, typeOfInterest, result, sinkInfo.sinkPC)
 
         if (builtMethodTemplate isDefined) {
           val modifiedMethod = builtMethodTemplate.get
@@ -586,9 +643,10 @@ class SlicingClassAnalysis(
             .filter(_.fqn != methodClassFile.fqn)
             .map(
               filterMethodsAndFields(_, relevantMethods, relevantFields)
-            ) + newDummy + newClass + StringLeaker.classFile +
+            ) + newDummy + newClass + StringLeaker.classFile
             // qamil: TODO: Optimierung möglich, man muss nicht immer jeden Leaker laden
-            ByteBufferLeaker.classFile ).
+            // + ByteBufferLeaker.classFile + AndroidContext.classFile + AndroidAssetManager.classFile + CBRByteArrayOutputStream.classFile + CBRByteBuffer.classFile + CBRInputStream.classFile + JavaClassLoader.classFile
+            ).
           //map(methodClassFile ⇒ removeAndroidSystemCallsFromStaticInit(methodClassFile)).
           map(classFile ⇒ classFile.copy(version = bi.Java5Version)).map(cf =>
             fixTime(cf)
@@ -601,17 +659,22 @@ class SlicingClassAnalysis(
             )
             .toMap
           //                        val classLoader = new InMemoryClassLoader(mappedClasses, this.getClass.getClassLoader)
+
           val classLoader = new InMemoryAndURLClassLoader(
             mappedClasses,
             this.getClass.getClassLoader,
-            urls
+            urls // qamil: URLs seem to be empty most of the time
           )
 
           strippedClasses
             .filter(c =>
               c.fqn != methodClassFile.fqn && c.fqn != "slicing.StringLeaker" && c.fqn != "slicing.ByteBufferLeaker"
+            //&& c.fqn != "android.content.Context" && c.fqn != "android/content/Context"
             )
-            .foreach(rcf => classLoader.loadClass(rcf.thisType.toJava))
+            .foreach(rcf => {
+              //println("Loading class " + rcf.fqn)
+              classLoader.loadClass(rcf.thisType.toJava)
+            })
 
           // QAMIL: NOCHMAL DIE (GESLICEDTE) METHOD VOR DER AUSFÜHRUNG DUMPEN #######
 
@@ -627,7 +690,7 @@ class SlicingClassAnalysis(
             method,
             sinkInfo,
             associatedMethodString,
-            typeOfInterest,
+            typeOfInterest
           )
 
           println(if (success) "Erfolg" else "Kein Erfolg")
@@ -707,7 +770,9 @@ class SlicingClassAnalysis(
           throw ex
 
         case ex: Throwable =>
-          println("Generic Exception " + ex)
+          ex.getStackTrace foreach println
+          println("Generic Exception LLLL " + ex)
+          ex.printStackTrace()
           genericErrors.incrementAndGet()
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
@@ -744,6 +809,7 @@ class SlicingClassAnalysis(
   def buildMethod(
       method: Method,
       origin: ValueOrigin,
+      typeOfInterest: ObjectType,
       result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] },
       loi: Int
   )(implicit project: Project[_]): (Option[MethodTemplate], Option[String]) = {
@@ -752,11 +818,13 @@ class SlicingClassAnalysis(
       "buildMethod: " + method + " with LoI: " + loi + " and origin " + origin + " from class " + method.classFile.fqn
     )
 
-    val slicer = new DeobfuscationSlicer(method, origin, result, loi)
+    val slicer = new ClassDeobfuscationSlicer(method, origin, result, loi)
     val slicedPCs = slicer.doSlice()
     val instructions = method.body.get.instructions
     // QAMIL: Wird ausschließlich INNERHALB einer MEthode gesliced (?)
     var str: Option[String] = None
+
+    /*
     // QAMIL: Ist das hier überhaupt relevant für die Klassen-Deobfuszierung?
     slicedPCs.toChain.toList.foreach { pc =>
       if (instructions.length > pc)
@@ -768,7 +836,9 @@ class SlicingClassAnalysis(
           case _ =>
         }
     }
-    val m = slicer.buildMethodFromSlice()
+     */
+
+    val m = slicer.buildMethodFromSlice(typeOfInterest)
 
     if (
       // Qamil: Sobald einer der ParameterTypen keinem CharSequenceObjectTypes entspricht, wird das MethodTemplate verworfen. WARUM?
@@ -784,6 +854,147 @@ class SlicingClassAnalysis(
     } else {
       (Some(m), str)
     }
+  }
+
+  // QAMIL: TODO: Nachverfolgen, anhand den dumps schauen, warum die Reflections hier fehlschlagen, oder ob das eine Anti-Deobfuszierungstechnik ist
+  def callReflectiveMethod(
+      modifiedMethod: MethodTemplate,
+      cl: ClassLoader,
+      cf: ClassFile,
+      method: Method,
+      sinkInfo: SinkInfo,
+      encStringOption: Option[String],
+      typeOfInterest: ObjectType
+  ): Boolean = {
+
+    // qamil: Der ClassLoader ist ein ClassLoader, welcher bereits die Bytedaten der zu ladenen Klassen beinhaltet
+
+    println(
+      "call reflective method with modified method " + modifiedMethod.name
+    )
+
+    val leakerClass = {
+      if (typeOfInterest == ObjectType.String)
+        cl.loadClass("slicing.StringLeaker")
+      else cl.loadClass("slicing.ByteBufferLeaker")
+    }
+
+    // qamil: Hier wird nur der FQN weitergegeben => com.google.android.gms.dynamite.DynamiteModule
+    val clazz = cl.loadClass(cf.thisType.toJava)
+    var successful = false
+    //                        try {
+    val constructors =
+      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0)
+
+    println("loaded classes")
+
+    if (modifiedMethod.name == "<clinit>") {
+      println("constructor <clinit>")
+      //            attempts.incrementAndGet()
+      clazz.getMethod(DUMMYSTATIC).invoke(null)
+
+      successful = logResult(
+        leakerClass,
+        method,
+        sinkInfo,
+        encStringOption,
+        typeOfInterest
+      )
+    } else if (modifiedMethod.name == "<init>") {
+      println("constructor <init>")
+      //            attempts.incrementAndGet()
+      constructors(0).setAccessible(true)
+      constructors(0).newInstance()
+
+      successful = logResult(
+        leakerClass,
+        method,
+        sinkInfo,
+        encStringOption,
+        typeOfInterest
+      )
+    } else if (constructors.nonEmpty || modifiedMethod.isStatic) {
+      println("constructor nonEmpty or staticMethod")
+      val instance =
+        if (modifiedMethod.isStatic) null
+        else {
+          constructors(0).setAccessible(true)
+          constructors(0).newInstance()
+        }
+      // qamil: Ergibt das nicht immer eine Methode?
+      val methods = clazz.getDeclaredMethods
+        .filter(m =>
+          m.getName == modifiedMethod.name && m.getParameterTypes.sameElements(
+            modifiedMethod.parameterTypes.map(_.toJavaClass)
+          )
+        )
+      val jvmMethod = methods(0)
+
+      jvmMethod.setAccessible(true)
+      // qamil: Hier werden passende Parametertypen instanziiert, um die Methode aufrufen zu können
+      val params: Array[_ <: Object] = jvmMethod.getParameterTypes
+        .map(tryToCreateInstance)
+        .map(
+          _.asInstanceOf[Object]
+        )
+
+      println(
+        "about to invoke a static method or one with a non-empty constructor"
+      )
+
+      successful = tryInvoke(
+        jvmMethod,
+        leakerClass,
+        instance.asInstanceOf[Object],
+        params,
+        method,
+        sinkInfo,
+        encStringOption,
+        typeOfInterest
+      )
+    } else {
+      attempts.decrementAndGet()
+      usesParams.incrementAndGet()
+      val constructorsWithParams = clazz.getDeclaredConstructors.map(c => {
+        c.setAccessible(true)
+        c
+      })
+      attempts.incrementAndGet()
+      for (constructor <- constructorsWithParams) {
+        try {
+          val constructorParams: Array[_ <: Object] =
+            constructor.getParameterTypes
+              .map(tryToCreateInstance)
+              .map(
+                _.asInstanceOf[Object]
+              )
+          val instance = constructor.newInstance(constructorParams: _*)
+
+          val jvmMethod = clazz.getDeclaredMethods
+            .filter(m =>
+              m.getName == modifiedMethod.name && m.getParameterTypes
+                .sameElements(modifiedMethod.parameterTypes.map(_.toJavaClass))
+            )(0)
+          jvmMethod.setAccessible(true)
+          val params: Array[_ <: Object] = jvmMethod.getParameterTypes
+            .map(tryToCreateInstance)
+            .map(_.asInstanceOf[Object])
+          successful |= tryInvoke(
+            jvmMethod,
+            leakerClass,
+            instance.asInstanceOf[Object],
+            params,
+            method,
+            sinkInfo,
+            encStringOption,
+            typeOfInterest
+          )
+        } catch {
+          case _: Throwable =>
+        }
+      }
+    }
+    successful
   }
 
   def fixTime(cf: ClassFile): ClassFile = {
@@ -1036,6 +1247,7 @@ class SlicingClassAnalysis(
       ).result(cf.version, cf.thisType)._1
   }
 
+  // TODO: An dieser Stelle ggf. eigenen COntext einfügen
   def tryToCreateInstance[T](clazz: Class[_]): Any = {
     if (clazz.isPrimitive) {
       //throw new NullPointerException()
@@ -1054,10 +1266,14 @@ class SlicingClassAnalysis(
           java.lang.Double.valueOf(0.0)
       }
     } else {
+
+      println("clazz: " + clazz)
+
       val const = clazz.getDeclaredConstructors.find(c =>
         c.getParameterTypes.isEmpty && c.isAccessible
       )
       if (const.isDefined) {
+        println("isDefined")
         const.get.newInstance()
       } else {
         null
@@ -1407,118 +1623,6 @@ class SlicingClassAnalysis(
     }
   }
 
-  // QAMIL: TODO: Nachverfolgen, anhand den dumps schauen, warum die Reflections hier fehlschlagen, oder ob das eine Anti-Deobfuszierungstechnik ist
-  def callReflectiveMethod(
-      modifiedMethod: MethodTemplate,
-      cl: ClassLoader,
-      cf: ClassFile,
-      method: Method,
-      sinkInfo: SinkInfo,
-      encStringOption: Option[String],
-      typeOfInterest: ObjectType,
-  ): Boolean = {
-
-    // qamil: Der ClassLoader ist ein ClassLoader, welcher bereits die Bytedaten der zu ladenen Klassen beinhaltet
-
-    val leakerClass = {
-      if (typeOfInterest == ObjectType.String) cl.loadClass("slicing.StringLeaker")
-      else cl.loadClass("slicing.ByteBufferLeaker")
-    }
-
-    // qamil: Hier wird nur der FQN weitergegeben => com.google.android.gms.dynamite.DynamiteModule
-    val clazz = cl.loadClass(cf.thisType.toJava)
-    var successful = false
-    //                        try {
-    val constructors =
-      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0)
-    if (modifiedMethod.name == "<clinit>") {
-      //            attempts.incrementAndGet()
-      clazz.getMethod(DUMMYSTATIC).invoke(null)
-      successful = logResult(leakerClass, method, sinkInfo, encStringOption, typeOfInterest)
-    } else if (modifiedMethod.name == "<init>") {
-      //            attempts.incrementAndGet()
-      constructors(0).setAccessible(true)
-      constructors(0).newInstance()
-      successful = logResult(leakerClass, method, sinkInfo, encStringOption, typeOfInterest)
-    } else if (constructors.nonEmpty || modifiedMethod.isStatic) {
-      val instance =
-        if (modifiedMethod.isStatic) null
-        else {
-          constructors(0).setAccessible(true)
-          constructors(0).newInstance()
-        }
-      // qamil: Ergibt das nicht immer eine Methode?
-      val methods = clazz.getDeclaredMethods
-        .filter(m =>
-          m.getName == modifiedMethod.name && m.getParameterTypes.sameElements(
-            modifiedMethod.parameterTypes.map(_.toJavaClass)
-          )
-        )
-      val jvmMethod = methods(0)
-
-      jvmMethod.setAccessible(true)
-      // qamil: Hier werden passende Parametertypen instanziiert, um die Methode aufrufen zu können
-      val params: Array[_ <: Object] = jvmMethod.getParameterTypes
-        .map(tryToCreateInstance)
-        .map(
-          _.asInstanceOf[Object]
-        )
-
-      successful = tryInvoke(
-        jvmMethod,
-        leakerClass,
-        instance.asInstanceOf[Object],
-        params,
-        method,
-        sinkInfo,
-        encStringOption,
-        typeOfInterest,
-      )
-    } else {
-      attempts.decrementAndGet()
-      usesParams.incrementAndGet()
-      val constructorsWithParams = clazz.getDeclaredConstructors.map(c => {
-        c.setAccessible(true)
-        c
-      })
-      attempts.incrementAndGet()
-      for (constructor <- constructorsWithParams) {
-        try {
-          val constructorParams: Array[_ <: Object] =
-            constructor.getParameterTypes
-              .map(tryToCreateInstance)
-              .map(
-                _.asInstanceOf[Object]
-              )
-          val instance = constructor.newInstance(constructorParams: _*)
-
-          val jvmMethod = clazz.getDeclaredMethods
-            .filter(m =>
-              m.getName == modifiedMethod.name && m.getParameterTypes
-                .sameElements(modifiedMethod.parameterTypes.map(_.toJavaClass))
-            )(0)
-          jvmMethod.setAccessible(true)
-          val params: Array[_ <: Object] = jvmMethod.getParameterTypes
-            .map(tryToCreateInstance)
-            .map(_.asInstanceOf[Object])
-          successful |= tryInvoke(
-            jvmMethod,
-            leakerClass,
-            instance.asInstanceOf[Object],
-            params,
-            method,
-            sinkInfo,
-            encStringOption,
-            typeOfInterest,
-          )
-        } catch {
-          case _: Throwable =>
-        }
-      }
-    }
-    successful
-  }
-
   def findInvokedInterfaceMethodsInSlice(
       modifiedMethod: MethodTemplate,
       interfaceTypes: Seq[ObjectType]
@@ -1543,10 +1647,14 @@ class SlicingClassAnalysis(
       originalMethod: Method,
       sinkInfo: SinkInfo,
       encStringOption: Option[String],
-      typeOfInterest: ObjectType,
+      typeOfInterest: ObjectType
   ): Boolean = {
+    println("here")
+    // TODO:
     jvmMethod.invoke(instance, params: _*)
-    logResult(resultClass, originalMethod, sinkInfo, encStringOption, typeOfInterest)
+    println("köajds")
+    true
+    //logResult(resultClass, originalMethod, sinkInfo, encStringOption, typeOfInterest)
   }
 
   def logResult(
@@ -1554,7 +1662,7 @@ class SlicingClassAnalysis(
       originalMethod: Method,
       sinkInfo: SinkInfo,
       encStringOption: Option[String],
-      typeOfInterest: ObjectType,
+      typeOfInterest: ObjectType
   ): Boolean = {
     val resField = resultClass.getDeclaredField("result")
     resField.setAccessible(true)
@@ -1564,7 +1672,7 @@ class SlicingClassAnalysis(
         val cl = StringClassifier.classify(res)
         if (
           (sinkInfo.sinkMethod != "bruteForce" || !cl) && (encStringOption.isEmpty ||
-            !res.contains(encStringOption.get))
+          !res.contains(encStringOption.get))
         ) {
           var encString: String = "-"
           if (encStringOption.isDefined)
