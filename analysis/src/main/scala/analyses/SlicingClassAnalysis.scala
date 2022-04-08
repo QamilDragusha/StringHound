@@ -30,6 +30,7 @@ import org.opalj.util.InMemoryAndURLClassLoader
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.res.AssetManager
+import customBRClasses.dummy.DummyClass
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -610,7 +611,7 @@ class SlicingClassAnalysis(
             .copy(superclassType = superType)
             .copy(accessFlags = modifiedClass.accessFlags & NON_ABSTRACT)
 
-          val dummyClass = buildDummyClass()
+          val dummyClass = DummyClass.classFile
 
           val (redirectedClass, newDummy) = handleMissingMethods(
             redirectToDummyClass(
@@ -1560,33 +1561,9 @@ class SlicingClassAnalysis(
     Runtime.getRuntime.freeMemory / 1024 / 1024
   }
 
+  // TODO: Dummy
   val DUMMY_CLASS = ObjectType("slicing/DummyClass")
 
-  def buildDummyClass(): ClassFile = {
-    CLASS(
-      version = bi.Java5Version,
-      accessModifiers = PUBLIC,
-      thisType = DUMMY_CLASS.fqn,
-      fields = FIELDS(),
-      methods = METHODS(
-        METHOD(
-          PUBLIC,
-          "<init>",
-          MethodDescriptor.NoArgsAndReturnVoid.toJVMDescriptor,
-          CODE(
-            ALOAD_0,
-            INVOKESPECIAL(
-              ObjectType.Object,
-              isInterface = false,
-              "<init>",
-              MethodDescriptor.NoArgsAndReturnVoid
-            ),
-            RETURN
-          )
-        )
-      )
-    ).toBR._1
-  }
 
   def cleanHard(): Unit = {
     Thread.getAllStackTraces.keySet().toArray().foreach { f =>
