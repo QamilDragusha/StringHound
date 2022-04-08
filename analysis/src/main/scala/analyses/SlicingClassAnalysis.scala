@@ -593,7 +593,7 @@ class SlicingClassAnalysis(
             )(modifiedClass, project)
 
           val superType = /*if (modifiedMethod.name == "<init>")*/ Option(
-            DUMMY_CLASS
+            DummyClass.objectType
           ) //else modifiedClass.superclassType
           val filteredClass = modifiedClass
             .copy(
@@ -992,6 +992,67 @@ class SlicingClassAnalysis(
     successful
   }
 
+  def tryToCreateInstance[T](clazz: Class[_]): Any = {
+    if (clazz.isPrimitive) {
+      //throw new NullPointerException()
+      ClassUtils.primitiveToWrapper(clazz) match {
+        case w if w == classOf[Integer]           => Integer.valueOf(0)
+        case w if w == classOf[java.lang.Boolean] => java.lang.Boolean.FALSE
+        case w if w == classOf[java.lang.Long]    => java.lang.Long.valueOf(0L)
+        case w if w == classOf[java.lang.Short] =>
+          java.lang.Short.valueOf(0.asInstanceOf[Short])
+        case w if w == classOf[java.lang.Byte] =>
+          java.lang.Byte.valueOf(0.asInstanceOf[Byte])
+        case w if w == classOf[java.lang.Character] =>
+          java.lang.Character.valueOf('a')
+        case w if w == classOf[java.lang.Float] => java.lang.Float.valueOf(0.0f)
+        case w if w == classOf[java.lang.Double] =>
+          java.lang.Double.valueOf(0.0)
+      }
+    } else {
+
+      val const = clazz.getDeclaredConstructors.find(c =>
+        c.getParameterTypes.isEmpty && c.isAccessible
+      )
+      if (const.isDefined) {
+        const.get.newInstance()
+      } else {
+        tryToMockInstance(clazz)
+      }
+    }
+  }
+
+  def tryToMockInstance(classToMock: Class[_]) : Any = {
+    val className = classToMock.getName
+
+    if (className == "android.content.Context") {
+      return mockContextInstance()
+    }
+
+    null
+  }
+
+  def mockContextInstance() : Context = {
+    val instance = mock(classOf[Context])
+    val assetManager = mock(classOf[AssetManager])
+
+    when(assetManager.open(anyString())).thenAnswer(new Answer[Any](){
+      def answer(invocation: InvocationOnMock): Object = {
+        val path : String = invocation.getArgument(0)
+        // assuming the file is already located in the resources folder
+        new FileInputStream(s"resources/$path")
+      }
+    })
+
+    when(instance.getAssets).thenAnswer(new Answer[Any](){
+      def answer(invocation: InvocationOnMock) : Object = {
+        assetManager
+      }
+    })
+
+    instance
+  }
+
   def fixTime(cf: ClassFile): ClassFile = {
     val filteredMethods = cf.methods.map[MethodTemplate] { m =>
       var skip = 0
@@ -1170,7 +1231,7 @@ class SlicingClassAnalysis(
     )
     (
       INVOKESTATIC(
-        DUMMY_CLASS,
+        DummyClass.objectType,
         isInterface = false,
         freeName,
         methodTmp.descriptor
@@ -1242,68 +1303,7 @@ class SlicingClassAnalysis(
       ).result(cf.version, cf.thisType)._1
   }
 
-  // TODO: An dieser Stelle ggf. eigenen COntext einfügen
-  def tryToCreateInstance[T](clazz: Class[_]): Any = {
-    if (clazz.isPrimitive) {
-      //throw new NullPointerException()
-      ClassUtils.primitiveToWrapper(clazz) match {
-        case w if w == classOf[Integer]           => Integer.valueOf(0)
-        case w if w == classOf[java.lang.Boolean] => java.lang.Boolean.FALSE
-        case w if w == classOf[java.lang.Long]    => java.lang.Long.valueOf(0L)
-        case w if w == classOf[java.lang.Short] =>
-          java.lang.Short.valueOf(0.asInstanceOf[Short])
-        case w if w == classOf[java.lang.Byte] =>
-          java.lang.Byte.valueOf(0.asInstanceOf[Byte])
-        case w if w == classOf[java.lang.Character] =>
-          java.lang.Character.valueOf('a')
-        case w if w == classOf[java.lang.Float] => java.lang.Float.valueOf(0.0f)
-        case w if w == classOf[java.lang.Double] =>
-          java.lang.Double.valueOf(0.0)
-      }
-    } else {
 
-      println("clazz: " + clazz)
-
-      val const = clazz.getDeclaredConstructors.find(c =>
-        c.getParameterTypes.isEmpty && c.isAccessible
-      )
-      if (const.isDefined) {
-        println("isDefined")
-        const.get.newInstance()
-      } else {
-        val className = clazz.getName
-        if (className == "android.content.Context") {
-          println("Mocking a context")
-          val instance = mock(classOf[Context])
-          val assetManager = mock(classOf[AssetManager])
-
-          val inputStream = new FileInputStream("resources/audience_network.dex")
-          //when(assetManager.open("")).thenReturn(input)
-          //when(instance.getAssets).thenReturn(assetManager)
-
-          when(assetManager.open(anyString())).thenAnswer(new Answer[Any](){
-            def answer(invocation: InvocationOnMock): Object = {
-              inputStream
-            }
-          })
-
-          when(instance.getAssets).thenAnswer(new Answer[Any](){
-            def answer(invocation: InvocationOnMock) : Object = {
-               assetManager
-            }
-          })
-
-
-
-          instance
-        } else {
-          println("Return null as parameter")
-          null
-        }
-
-      }
-    }
-  }
 
   def filterMethodsAndFields(
       cf: ClassFile,
@@ -1561,8 +1561,6 @@ class SlicingClassAnalysis(
     Runtime.getRuntime.freeMemory / 1024 / 1024
   }
 
-  // TODO: Dummy
-  val DUMMY_CLASS = ObjectType("slicing/DummyClass")
 
 
   def cleanHard(): Unit = {

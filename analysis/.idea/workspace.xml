@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Mocked Context and AssetManager, now able to successfully leak ByteBuffers">
-      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/dummy/DummyClass.scala" afterDir="false" />
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Extracted DummyClass out of SlicingClassAnalysis">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
     </list>
@@ -266,7 +265,7 @@
       <workItem from="1648575406763" duration="15138000" />
       <workItem from="1648731676845" duration="21065000" />
       <workItem from="1649187252560" duration="23167000" />
-      <workItem from="1649346130330" duration="9209000" />
+      <workItem from="1649346130330" duration="10730000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -345,7 +344,14 @@
       <option name="project" value="LOCAL" />
       <updated>1649412178224</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Extracted DummyClass out of SlicingClassAnalysis">
+      <created>1649412794458</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1649412794458</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -410,7 +416,8 @@
     <MESSAGE value="Added custom library BR Classes" />
     <MESSAGE value="Reverted changes blocking usual string leaking and implemented additional Library Mocks" />
     <MESSAGE value="Mocked Context and AssetManager, now able to successfully leak ByteBuffers" />
-    <option name="LAST_COMMIT_MESSAGE" value="Mocked Context and AssetManager, now able to successfully leak ByteBuffers" />
+    <MESSAGE value="Extracted DummyClass out of SlicingClassAnalysis" />
+    <option name="LAST_COMMIT_MESSAGE" value="Extracted DummyClass out of SlicingClassAnalysis" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
