@@ -9,7 +9,7 @@ import java.util.{Timer, TimerTask}
 import classifier.{MethodClassifier, StringClassifier}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
-import helper.ClassLoaderFinder
+import helper.{APKRepackager, ClassLoaderFinder}
 import main.StringDecryption
 import org.apache.commons.lang3.ClassUtils
 import org.mockito.Mockito.{mock, when, withSettings}
@@ -40,9 +40,13 @@ import scala.io.Source
 import scala.reflect.runtime.universe.typeOf
 
 class SlicingClassAnalysis(
-    val project: Project[URL],
+    val pathToApk: String,
     val parameters: Seq[String]
 ) {
+
+  private val apkRepackager = new APKRepackager(pathToApk)
+  private val project = apkRepackager.opalProject
+
 
   implicit val projectToAnalyze: Project[URL] = project
   implicit val classHierarchy: ClassHierarchy = project.classHierarchy

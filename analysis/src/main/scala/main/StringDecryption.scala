@@ -96,7 +96,7 @@ object StringDecryption {
         } else if (line.hasOption("cstat")) {
           runOnOneFile(jar, "cstat", filterSet, bruteforce, debug, !line.hasOption("j"))
         } else if (line.hasOption("cl")) {
-          runOnOneFile(jar, "cl", filterSet, bruteforce, debug, !line.hasOption("j"))
+          runClassSlicingAnalysis(filename, !line.hasOption("j"))
         }
 
         else {
@@ -180,6 +180,29 @@ object StringDecryption {
     bufferedReader.close()
   }
 
+  def runClassSlicingAnalysis(pathToApk: String, isAndroid: Boolean) : Unit = {
+    // TODO: Refactor to have less File instances, redundant with APKRepackager
+    OPALLogger.updateLogger(GlobalLogContext, ErrorLogger)
+    val apk = new File(pathToApk)
+    val absolutePath = apk.getAbsolutePath
+    val parameters = List(apk.getName, absolutePath)
+    forbidSystemExitCall()
+    val t0 = System.currentTimeMillis()
+
+    try {
+
+      new SlicingClassAnalysis(pathToApk, parameters).doAnalyze(t0, false, false, isAndroid)
+
+    } catch {
+      case e : Throwable => {
+        println(e)
+        logger.error(parameters.head)
+        logger.error(e.getMessage)
+        logger.error(e.getStackTrace.mkString("\n"))
+      }
+    }
+    enableSystemExitCall()
+  }
 
   def runOnOneFile(jar: File, analysis: String, filterSet: Set[String], bruteForce: Boolean, debug: Boolean, isAndroid: Boolean): Unit = {
     val jarName = jar.getName
@@ -206,8 +229,9 @@ object StringDecryption {
           new StringAndMethodAnalysis(p, parameters).doAnalyze(t0)
         case "cstat" => new CodeStringFeatureExtraction(p, parameters, filterSet).doAnalyze()
         case "cl" => {
-          println("SlicingClassAnalysis")
-          new SlicingClassAnalysis(p, parameters).doAnalyze(t0, bruteForce, debug, isAndroid)
+          // qamil: TODO: Refector code to remove this
+          class IncorrectParameterHandlingException extends RuntimeException
+          throw new IncorrectParameterHandlingException()
         }
         case _ =>
           new SlicingAnalysis(p, parameters).doAnalyze(t0, bruteForce, debug, isAndroid)

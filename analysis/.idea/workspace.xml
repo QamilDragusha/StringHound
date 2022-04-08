@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Extracted DummyClass out of SlicingClassAnalysis">
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Refactored mocking mechanic">
+      <change afterPath="$PROJECT_DIR$/src/main/scala/helper/APKRepackager.scala" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/main/StringDecryption.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/main/StringDecryption.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -175,6 +177,7 @@
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+    <property name="two.files.diff.last.used.file" value="$PROJECT_DIR$/src/main/scala/helper/APKTransformer.scala" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -201,7 +204,7 @@
       <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
       <option name="MAIN_CLASS_NAME" value="main.StringDecryption" />
       <module name="deobfuscator" />
-      <option name="PROGRAM_PARAMETERS" value="-s -f $USER_HOME$/Documents/ClassHound/AppAnalysis/JARs/complete/AngryBirdsPop-enjarify.jar -cl" />
+      <option name="PROGRAM_PARAMETERS" value="-s -f $USER_HOME$/Documents/ClassHound/AppAnalysis/APKs/AngryBirdsPop.apk -cl" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -265,7 +268,7 @@
       <workItem from="1648575406763" duration="15138000" />
       <workItem from="1648731676845" duration="21065000" />
       <workItem from="1649187252560" duration="23167000" />
-      <workItem from="1649346130330" duration="10730000" />
+      <workItem from="1649346130330" duration="15132000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -351,7 +354,14 @@
       <option name="project" value="LOCAL" />
       <updated>1649412794458</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Refactored mocking mechanic">
+      <created>1649414352214</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1649414352214</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -417,7 +427,8 @@
     <MESSAGE value="Reverted changes blocking usual string leaking and implemented additional Library Mocks" />
     <MESSAGE value="Mocked Context and AssetManager, now able to successfully leak ByteBuffers" />
     <MESSAGE value="Extracted DummyClass out of SlicingClassAnalysis" />
-    <option name="LAST_COMMIT_MESSAGE" value="Extracted DummyClass out of SlicingClassAnalysis" />
+    <MESSAGE value="Refactored mocking mechanic" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactored mocking mechanic" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
