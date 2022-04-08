@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/test/scala" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../target/scala-2.12/src_managed/main" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../target/scala-2.12/src_managed/test" isTestSource="true" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/../../target" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/android/support/customtabs" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/main/python/enjarify-master/output Kopie/android/support/v4" />
@@ -38,11 +39,16 @@
     <orderEntry type="library" name="sbt: it.unimi.dsi:fastutil:8.1.1:jar" level="project" />
     <orderEntry type="library" name="sbt: joda-time:joda-time:2.9.9:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="sbt: junit:junit:4.12:jar" level="project" />
+    <orderEntry type="library" name="sbt: net.bytebuddy:byte-buddy-agent:1.12.8:jar" level="project" />
+    <orderEntry type="library" name="sbt: net.bytebuddy:byte-buddy:1.12.8:jar" level="project" />
     <orderEntry type="library" name="sbt: net.sf.extjwnl:extjwnl-data-wn31:1.2:jar" level="project" />
     <orderEntry type="library" name="sbt: net.sf.extjwnl:extjwnl:1.9.4:jar" level="project" />
     <orderEntry type="library" name="sbt: org.apache.commons:commons-lang3:3.7:jar" level="project" />
     <orderEntry type="library" name="sbt: org.apache.commons:commons-text:1.3:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="sbt: org.hamcrest:hamcrest-core:1.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.mockito:mockito-core:4.4.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.mockito:mockito-inline:4.4.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.objenesis:objenesis:3.2:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-parser-combinators_2.12:1.1.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-xml_2.12:1.1.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.12.8:jar" level="project" />
@@ -96,15 +102,6 @@
           <root url="jar://$MODULE_DIR$/../../lib/static-analysis-infrastructure_2.12.jar!/" />
           <root url="jar://$MODULE_DIR$/../../lib/three-address-code_2.12-sources.jar!/" />
           <root url="jar://$MODULE_DIR$/../../lib/three-address-code_2.12.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../resources/android_mock.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

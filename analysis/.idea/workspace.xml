@@ -4,21 +4,32 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Added custom library BR Classes">
-      <change afterPath="$PROJECT_DIR$/src/main/java/android/content/Context.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/android/content/res/AssetManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/JavaClassLoader.scala" afterDir="false" />
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Reverted changes blocking usual string leaking and implemented additional Library Mocks">
+      <change afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/sbt__net_bytebuddy_byte_buddy_1_12_8_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/sbt__net_bytebuddy_byte_buddy_agent_1_12_8_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/sbt__org_mockito_mockito_core_4_4_0_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/sbt__org_mockito_mockito_inline_4_4_0_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/sbt__org_objenesis_objenesis_3_2_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/resources/audience_network.dex" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/modules/deobfuscator.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/deobfuscator.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.sbt" beforeDir="false" afterPath="$PROJECT_DIR$/build.sbt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies$.class" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies$library$.class" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies$library$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies$version$.class" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies$version$.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies.class" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/classes/Dependencies.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/$global/update/$global/streams/update_cache_2.12/output" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/$global/update/$global/streams/update_cache_2.12/output" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/compileIncSetup/$global/streams/inc_compile_2.12.zip" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/compileIncSetup/$global/streams/inc_compile_2.12.zip" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/$global/streams/out" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/$global/streams/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/android/content/Context.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/android/content/res/AssetManager.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidAssetManager.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidAssetManager.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidContext.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/androidLib/AndroidContext.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/ByteArrayOutputStream.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/CBRByteArrayOutputStream.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/ByteBuffer.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/CBRByteBuffer.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/InputStream.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/java/CBRInputStream.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/leakers/ByteBufferLeaker.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/leakers/ByteBufferLeaker.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/customBRClasses/leakers/StringLeaker.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/customBRClasses/leakers/StringLeaker.scala" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/debugging/Dumper.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/debugging/Dumper.scala" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/ClassDeobfuscationSlicer.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/ClassDeobfuscationSlicer.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/DeobfuscationSlicer.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/org/opalj/slicing/DeobfuscationSlicer.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,6 +46,23 @@
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
     </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="SBT">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="deobfuscator" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -57,9 +85,12 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.8-sources.jar!/scala/Predef.scala" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Library/Java/JavaVirtualMachines/corretto-1.8.0_292/Contents/Home/src.zip!/java/lang/reflect/Method.java" root0="SKIP_INSPECTION" />
     <setting file="jar://$PROJECT_DIR$/lib/bytecode-representation_2.12.jar!/org/opalj/br/instructions/LoadString.class" root0="SKIP_INSPECTION" />
     <setting file="jar://$PROJECT_DIR$/lib/abstract-interpretation-framework_2.12.jar!/org/opalj/ai/AIResult.class" root0="SKIP_INSPECTION" />
     <setting file="jar://$PROJECT_DIR$/lib/bytecode-representation_2.12.jar!/org/opalj/br/package.class" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Library/Java/JavaVirtualMachines/corretto-1.8.0_292/Contents/Home/src.zip!/java/lang/Class.java" root0="SKIP_INSPECTION" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -161,7 +192,7 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/resources" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.15" />
@@ -170,6 +201,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/resources" />
       <recent name="C:\Users\glanz\git\StringHound\analysis" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -244,7 +276,8 @@
       <workItem from="1648497429226" duration="4202000" />
       <workItem from="1648575406763" duration="15138000" />
       <workItem from="1648731676845" duration="21065000" />
-      <workItem from="1649187252560" duration="1112000" />
+      <workItem from="1649187252560" duration="23167000" />
+      <workItem from="1649346130330" duration="8721000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -309,7 +342,14 @@
       <option name="project" value="LOCAL" />
       <updated>1648575431826</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Reverted changes blocking usual string leaking and implemented additional Library Mocks">
+      <created>1649188656400</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1649188656400</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -372,7 +412,8 @@
     <MESSAGE value="Implemented HashExtension and small code changes" />
     <MESSAGE value="Created / Extracted first BRClasses" />
     <MESSAGE value="Added custom library BR Classes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added custom library BR Classes" />
+    <MESSAGE value="Reverted changes blocking usual string leaking and implemented additional Library Mocks" />
+    <option name="LAST_COMMIT_MESSAGE" value="Reverted changes blocking usual string leaking and implemented additional Library Mocks" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

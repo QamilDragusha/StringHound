@@ -15,9 +15,9 @@ object Dumper {
   private val slicedMethods = false
 
 
-  private val arbitraryMethods = false
+  private val arbitraryMethods = true
   private val methodTemplates = true
-  private val codeDirectly = false
+  private val codeDirectly = true
   private val arbitraryClassFiles = false
 
   private var uniqueId : Int = 0

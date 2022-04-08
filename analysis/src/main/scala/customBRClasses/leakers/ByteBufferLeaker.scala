@@ -20,9 +20,10 @@ object ByteBufferLeaker extends Leaker {
       fields = FIELDS(
         FIELD(PUBLIC.STATIC, "result", byteBufferType.toJVMTypeName),
         // qamil TODO: Ist das nicht unnötig? Validieren und ggf. löschen
-        FIELD(PUBLIC.STATIC, "input", byteBufferType.toJVMTypeName)
+        //FIELD(PUBLIC.STATIC, "input", byteBufferType.toJVMTypeName)
       ),
       methods = METHODS(
+        /*
         METHOD(
           STATIC.PUBLIC,
           "<clinit>",
@@ -33,7 +34,7 @@ object ByteBufferLeaker extends Leaker {
             PUTSTATIC(thisType, "input", byteBufferType.toJVMTypeName),
             RETURN
           )
-        ),
+        ), */
         METHOD(
           PUBLIC.STATIC,
           "logByteBuffer",

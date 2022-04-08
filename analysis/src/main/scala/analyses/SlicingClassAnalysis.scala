@@ -7,51 +7,36 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Timer, TimerTask}
 import classifier.{MethodClassifier, StringClassifier}
-import customBRClasses.androidLib.{AndroidAssetManager, AndroidContext}
-import customBRClasses.java.{
-  CBRByteArrayOutputStream,
-  CBRByteBuffer,
-  CBRInputStream,
-  JavaClassLoader
-}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
 import helper.ClassLoaderFinder
 import main.StringDecryption
 import org.apache.commons.lang3.ClassUtils
-import org.opalj._
+import org.mockito.Mockito.{mock, when, withSettings}
+import org.mockito.internal.stubbing.answers.ThrowsException
+import org.opalj.{Answer => _, _}
 import org.opalj.ai.domain.PerformAI
 import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
 import org.opalj.ai.{AIResult, ValueOrigin}
-import org.opalj.ba.{
-  CLASS,
-  CODE,
-  CodeAttributeBuilder,
-  CodeElement,
-  FIELD,
-  FIELDS,
-  METHOD,
-  METHODS,
-  PUBLIC,
-  STATIC,
-  toDA
-}
+import org.opalj.ba.{CLASS, CODE, CodeAttributeBuilder, CodeElement, FIELD, FIELDS, METHOD, METHODS, PUBLIC, STATIC, toDA}
 import org.opalj.bc.Assembler
 import org.opalj.bi.ACC_PUBLIC
 import org.opalj.br.analyses.{Project, StringConstantsInformationKey}
 import org.opalj.br.instructions.{MethodInvocationInstruction, _}
 import org.opalj.br.{PCInMethod, _}
 import org.opalj.collection.immutable.{ConstArray, RefArray}
-import org.opalj.slicing.{
-  ClassDeobfuscationSlicer,
-  DeobfuscationSlicer,
-  ParameterUsageException,
-  SlicingConfiguration
-}
+import org.opalj.slicing.{ClassDeobfuscationSlicer, DeobfuscationSlicer, ParameterUsageException, SlicingConfiguration}
 import org.opalj.util.InMemoryAndURLClassLoader
+import android.content.Context
+import android.content.pm.ApplicationInfo
+import android.content.res.AssetManager
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 
 import java.nio.ByteBuffer
 import scala.io.Source
+import scala.reflect.runtime.universe.typeOf
 
 class SlicingClassAnalysis(
     val project: Project[URL],
@@ -161,7 +146,7 @@ class SlicingClassAnalysis(
     val classLoaderInstatiations =
       classLoaderFinder.findClassLoaderInstantiations()
     // TODO: Das bringt nichts??
-    val classLoaderUsages = classLoaderFinder.findClassLoaderUsages()
+    // val classLoaderUsages = classLoaderFinder.findClassLoaderUsages()
 
     val methodInstructionsToAnalyze =
       classLoaderInstatiations //concatTransitive classLoaderUsages
@@ -352,6 +337,8 @@ class SlicingClassAnalysis(
       result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] }
   ): Unit = {
 
+    Dumper.dumpMethod(method, "processOrigins/")
+
     val operands = result.operandsArray(sinkInfo.sinkPC)
     if (operands == null) return
     //println("after return: index = " + index + ", sinkInfo = " + sinkInfo + ", method = " + method + ", project = " + "project" + ", resultDomain = " + result.domain)
@@ -361,7 +348,7 @@ class SlicingClassAnalysis(
       case result.domain.StringValue(
             s
           ) ⇒ // Not Obfuscated or deob method // Sollte ich vllt nachverfolgen wenn ein String hierdrinsteht, manche Klassen stehen im Klartext
-        println("StringValue" + s)
+       println("StringValue" + s)
       // QAMIL : Scheint bei den Methoden hier die Regel zu sein
       case result.domain.DomainReferenceValueTag(v) ⇒
         //println("DOMAINREFERENCEVALUETAG")
@@ -643,9 +630,9 @@ class SlicingClassAnalysis(
             .filter(_.fqn != methodClassFile.fqn)
             .map(
               filterMethodsAndFields(_, relevantMethods, relevantFields)
-            ) + newDummy + newClass + StringLeaker.classFile
+            ) + newDummy + newClass + StringLeaker.classFile + ByteBufferLeaker.classFile // + AndroidContext.classFile
             // qamil: TODO: Optimierung möglich, man muss nicht immer jeden Leaker laden
-            // + ByteBufferLeaker.classFile + AndroidContext.classFile + AndroidAssetManager.classFile + CBRByteArrayOutputStream.classFile + CBRByteBuffer.classFile + CBRInputStream.classFile + JavaClassLoader.classFile
+            // + AndroidContext.classFile + AndroidAssetManager.classFile + CBRByteArrayOutputStream.classFile + CBRByteBuffer.classFile + CBRInputStream.classFile + JavaClassLoader.classFile
             ).
           //map(methodClassFile ⇒ removeAndroidSystemCallsFromStaticInit(methodClassFile)).
           map(classFile ⇒ classFile.copy(version = bi.Java5Version)).map(cf =>
@@ -708,7 +695,7 @@ class SlicingClassAnalysis(
         }
       } catch {
         case ex: java.lang.VerifyError =>
-          println("Exception " + ex)
+          println("Nullptr Exception " + ex)
           verifyErrors.incrementAndGet()
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
@@ -716,7 +703,7 @@ class SlicingClassAnalysis(
             StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: java.lang.reflect.InvocationTargetException =>
-          println("Exception " + ex)
+          ex.printStackTrace()
           invocationTargetError.incrementAndGet()
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
@@ -725,6 +712,7 @@ class SlicingClassAnalysis(
           }
         case ex: java.lang.NullPointerException =>
           println("Exception " + ex)
+          ex.printStackTrace()
           nullPointerError.incrementAndGet()
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
@@ -931,6 +919,8 @@ class SlicingClassAnalysis(
       val jvmMethod = methods(0)
 
       jvmMethod.setAccessible(true)
+
+
       // qamil: Hier werden passende Parametertypen instanziiert, um die Methode aufrufen zu können
       val params: Array[_ <: Object] = jvmMethod.getParameterTypes
         .map(tryToCreateInstance)
@@ -976,9 +966,13 @@ class SlicingClassAnalysis(
                 .sameElements(modifiedMethod.parameterTypes.map(_.toJavaClass))
             )(0)
           jvmMethod.setAccessible(true)
+
+
           val params: Array[_ <: Object] = jvmMethod.getParameterTypes
             .map(tryToCreateInstance)
             .map(_.asInstanceOf[Object])
+
+
           successful |= tryInvoke(
             jvmMethod,
             leakerClass,
@@ -1276,7 +1270,36 @@ class SlicingClassAnalysis(
         println("isDefined")
         const.get.newInstance()
       } else {
-        null
+        val className = clazz.getName
+        if (className == "android.content.Context") {
+          println("Mocking a context")
+          val instance = mock(classOf[Context])
+          val assetManager = mock(classOf[AssetManager])
+
+          val inputStream = new FileInputStream("resources/audience_network.dex")
+          //when(assetManager.open("")).thenReturn(input)
+          //when(instance.getAssets).thenReturn(assetManager)
+
+          when(assetManager.open(anyString())).thenAnswer(new Answer[Any](){
+            def answer(invocation: InvocationOnMock): Object = {
+              inputStream
+            }
+          })
+
+          when(instance.getAssets).thenAnswer(new Answer[Any](){
+            def answer(invocation: InvocationOnMock) : Object = {
+               assetManager
+            }
+          })
+
+
+
+          instance
+        } else {
+          println("Return null as parameter")
+          null
+        }
+
       }
     }
   }
@@ -1649,12 +1672,10 @@ class SlicingClassAnalysis(
       encStringOption: Option[String],
       typeOfInterest: ObjectType
   ): Boolean = {
-    println("here")
+    println("invoking reflection")
     // TODO:
     jvmMethod.invoke(instance, params: _*)
-    println("köajds")
-    true
-    //logResult(resultClass, originalMethod, sinkInfo, encStringOption, typeOfInterest)
+    logResult(resultClass, originalMethod, sinkInfo, encStringOption, typeOfInterest)
   }
 
   def logResult(
@@ -1664,9 +1685,12 @@ class SlicingClassAnalysis(
       encStringOption: Option[String],
       typeOfInterest: ObjectType
   ): Boolean = {
+    println("logResult: Getting Result field")
     val resField = resultClass.getDeclaredField("result")
+    println("logResult: Setting Result Field Accessible")
     resField.setAccessible(true)
     if (typeOfInterest == ObjectType.String) {
+      println("logResult: The Type of Interest is a String")
       val res = resField.get(null).asInstanceOf[String]
       if (res.nonEmpty && res != "null") {
         val cl = StringClassifier.classify(res)
@@ -1694,7 +1718,12 @@ class SlicingClassAnalysis(
       }
       false
     } else {
+      println("logResult: The type of interest is NOT a String, getting the field as a ByteBuffer")
       val res = resField.get(null).asInstanceOf[ByteBuffer]
+      println("Revealing the byte buffer")
+      println("resfield: " + resField)
+      println("res: " + res)
+
       resultStream.append(res.array().mkString(""))
       resultStream.flush()
       true

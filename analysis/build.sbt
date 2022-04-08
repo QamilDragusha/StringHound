@@ -12,7 +12,9 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-simple" % "1.7.25",
   "org.apache.commons" % "commons-lang3" % "3.7",
   "net.sf.extjwnl" % "extjwnl" % "1.9.4",
-  "net.sf.extjwnl" % "extjwnl-data-wn31" % "1.2"
+  "net.sf.extjwnl" % "extjwnl-data-wn31" % "1.2",
+  "org.mockito" % "mockito-inline" % "4.4.0"
+  //"org.mockito" % "mockito-core" % "4.4.0"
 )
 unmanagedClasspath in Runtime += baseDirectory.value / "resources"
 

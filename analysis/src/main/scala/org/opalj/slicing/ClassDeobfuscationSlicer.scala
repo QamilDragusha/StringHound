@@ -172,26 +172,6 @@ class ClassDeobfuscationSlicer(
         slicedPCs.contains(_)
       )
 
-    /// QAMIL CAUTION: NUR TESTWEISE FÜR INMEMORYDEXCLASSLOADER
-    /*
-
-    labeledCode.insert(0, InsertionPosition.Before, Seq(
-      //LoadLocalVariableInstruction(AndroidContext.objectType, 0),
-      NOP,
-      //NEW(AndroidContext.objectType.fqn),
-      //NEW(AndroidContext.objectType.fqn),
-      //NEW(AndroidContext.objectType.fqn),
-      //NEW(AndroidContext.objectType.fqn),
-      NEW(AndroidContext.objectType.fqn),
-      ASTORE_0,
-      ALOAD_0,
-      INVOKESPECIAL(AndroidContext.objectType.fqn, isInterface = false, "<init>", MethodDescriptor.withNoArgs(VoidType).toJVMDescriptor),
-      //ACONST_NULL,
-    ))
-    */
-
-
-    //// QAMIL
 
     if (filteredExceptionHandlers.exists(_.handlerPC <= minSliced)) {
       if (method.name == "<init>")
@@ -256,6 +236,7 @@ class ClassDeobfuscationSlicer(
     }
     labeledCode.insert(pcOfSlicingCriterion, InsertionPosition.Before, beforeInstructions ++ afterInstructions)
 
+    // qamil: At this point we are inserting the instructions enabling us to extract / leak the results
     insertResultValueLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode, typeOfInterest)
 
     val newCode = labeledCode.result
@@ -300,11 +281,14 @@ class ClassDeobfuscationSlicer(
   }
 
   private def insertResultValueLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode, objectType: ObjectType) : Unit = {
+    println("Slicer: insertResultValueLoggingInstructions")
     if (objectType == ObjectType.String) {
       insertStringResultLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode)
     } else if (objectType == ObjectType("java/nio/ByteBuffer")) {
+      println("Slicer: insertResultValueLoggingInstructions for ByteBuffers")
       insertByteBufferResultLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode)
     }
+    println("Slicer: inserted ResultValueLoggingInstructions if possible")
   }
 
   private def insertByteBufferResultLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode) : Unit = {
@@ -313,7 +297,7 @@ class ClassDeobfuscationSlicer(
       labeledCode.insert(maxSliced, InsertionPosition.After,
         Seq(
           //                    CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
-          /*
+
           CodeElement.instructionToInstructionElement(
             INVOKESTATIC(
               "slicing/ByteBufferLeaker",
@@ -321,7 +305,7 @@ class ClassDeobfuscationSlicer(
               "logByteBuffer", "(Ljava/nio/ByteBuffer;)V"
             )
           ),
-          */
+
           CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
           ReturnInstruction(method.returnType)
         ))
@@ -338,7 +322,7 @@ class ClassDeobfuscationSlicer(
       labeledCode.insert(maxSliced, InsertionPosition.After,
         Seq(
           CodeElement.instructionToInstructionElement(ALOAD(maxLocals)),
-          /*
+
           CodeElement.instructionToInstructionElement(
             INVOKESTATIC(
               "slicing/ByteBufferLeaker",
@@ -346,7 +330,7 @@ class ClassDeobfuscationSlicer(
               "logByteBuffer", "(Ljava/nio/ByteBuffer;)V"
             )
           ),
-          */
+
 
           CodeElement.instructionToInstructionElement(getDefaultValueFor(method.returnType)),
           ReturnInstruction(method.returnType)

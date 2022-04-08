@@ -17,7 +17,7 @@ object StringLeaker extends Leaker {
       accessModifiers = PUBLIC,
       thisType = thisType,
       fields = FIELDS(
-        FIELD(PUBLIC.STATIC, "result", ObjectType.String.toJVMTypeName),
+        FIELD(PUBLIC.STATIC, "result", ObjectType.String.toJVMTypeName), // Ljava/lang/String
         FIELD(PUBLIC.STATIC, "input", ArrayType(ObjectType.String).toJVMTypeName)
       ),
       methods = METHODS(
