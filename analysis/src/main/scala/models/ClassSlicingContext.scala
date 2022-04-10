@@ -17,6 +17,8 @@ object ClassSlicingContext {
 }
 
 case class ClassSlicingContext(
-    dateTypeOfInterest: ObjectType,
-    dataDestination: ObjectType,
+                                /** The type which's contents MAY are to be leaked / extracted */
+                                dataTypeOfInterest: ObjectType,
+                                /** The type which's instanciation uses the dataTypeOfInterest */
+                                dataDestination: ObjectType,
                               )

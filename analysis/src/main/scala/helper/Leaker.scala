@@ -1,7 +1,11 @@
 package helper
 
+import models.ClassSlicingContext
+import org.opalj.br.ObjectType
+
 import java.io.{File, FileOutputStream}
 import java.nio.ByteBuffer
+import java.lang.reflect.Field
 import scala.collection.mutable
 
 object Leaker {
@@ -14,6 +18,18 @@ class Leaker(apkManager: APKManager) {
 
   private val usedFileNames : mutable.HashSet[String] = new mutable.HashSet[String]()
   private val resultsDirectory = apkManager.resultsDirectory
+
+  def leakResult(resultField: Field, context: ClassSlicingContext) : Unit = {
+    val fieldObjectType = context.dataTypeOfInterest
+    fieldObjectType match {
+      case ObjectType("java/nio/ByteBuffer") =>
+        {
+          val result = resultField.get(null).asInstanceOf[ByteBuffer]
+          leakDexFile(result)
+        }
+      case _ => return
+    }
+  }
 
   def leakDexFile(dexBuffer: ByteBuffer, preferredName: Option[String] = None) : Unit = {
     val fileName = getSuitableDexFileName(preferredName)

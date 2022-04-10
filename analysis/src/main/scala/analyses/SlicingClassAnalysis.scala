@@ -816,7 +816,7 @@ class SlicingClassAnalysis(
     val slicer = new ClassDeobfuscationSlicer(method, origin, result, loi)
     slicer.doSlice()
 
-    val m = slicer.buildMethodFromSlice(context.dateTypeOfInterest)
+    val m = slicer.buildMethodFromSlice(context.dataTypeOfInterest)
 
     if (
       // Qamil: Sobald einer der ParameterTypen keinem CharSequenceObjectTypes entspricht, wird das MethodTemplate verworfen. WARUM?
@@ -851,7 +851,7 @@ class SlicingClassAnalysis(
     )
 
     val leakerClass = {
-      if (context.dateTypeOfInterest == ObjectType.String)
+      if (context.dataTypeOfInterest == ObjectType.String)
         cl.loadClass("slicing.StringLeaker")
       else cl.loadClass("slicing.ByteBufferLeaker")
     }
@@ -1649,12 +1649,12 @@ class SlicingClassAnalysis(
       context: ClassSlicingContext
   ): Boolean = {
     println("logResult: Getting Result field")
-    val resField = resultClass.getDeclaredField("result")
+    val resultField = resultClass.getDeclaredField("result")
     println("logResult: Setting Result Field Accessible")
-    resField.setAccessible(true)
-    if (context.dateTypeOfInterest == ObjectType.String) {
+    resultField.setAccessible(true)
+    if (context.dataTypeOfInterest == ObjectType.String) {
       println("logResult: The Type of Interest is a String")
-      val res = resField.get(null).asInstanceOf[String]
+      val res = resultField.get(null).asInstanceOf[String]
       if (res.nonEmpty && res != "null") {
         // qamil: TODO: Check whether that can stay as is and how it should be handled
          val cl = false // StringClassifier.classify(res)
@@ -1682,10 +1682,7 @@ class SlicingClassAnalysis(
       }
       false
     } else {
-      println("logResult: The type of interest is NOT a String, getting the field as a ByteBuffer")
-      val leakedResult = resField.get(null).asInstanceOf[ByteBuffer]
-      // qamil: TODO: Not always clear whether this should actually result in a dex file
-      apkManager.leaker.leakDexFile(leakedResult)
+      apkManager.leaker.leakResult(resultField, context)
       true
     }
 
