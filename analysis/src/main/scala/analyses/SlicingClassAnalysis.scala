@@ -6,7 +6,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Timer, TimerTask}
-import classifier.{MethodClassifier, StringClassifier}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
 import helper.{APKManager, ClassLoaderFinder}
@@ -31,6 +30,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.res.AssetManager
 import customBRClasses.dummy.DummyClass
+import models.ClassSlicingContext
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -186,8 +186,6 @@ class SlicingClassAnalysis(
             programCounters.foreach { pc =>
               val instruction = methodBody.instructions(pc)
 
-              //println("\n\n\nmathcing instruction " + instruction)
-
               instruction.opcode match {
                 // Einziger relevante Fall
                 case INVOKESPECIAL.opcode =>
@@ -195,6 +193,7 @@ class SlicingClassAnalysis(
                   val invoke = instruction.asMethodInvocationInstruction
                   val params = invoke.methodDescriptor.parameterTypes
                   val sig = invoke.methodDescriptor.toJava(invoke.name)
+
 
                   params.iterator.zipWithIndex foreach { parameter =>
                     val (parameterType, index) = parameter
@@ -208,7 +207,7 @@ class SlicingClassAnalysis(
                         "java/nio/ByteBuffer"
                       )
                     ) {
-                      println("\n\n\nmatching instruction " + instruction)
+                      println("\n\n\nmatching instruction " + instruction + ", declared at " + instruction.asMethodInvocationInstruction.declaringClass)
                       println("typeChecked: " + parameterType)
 
                       // QAMIL: DUMP ANOTHER METHOD ########
@@ -217,15 +216,22 @@ class SlicingClassAnalysis(
                         "iterateDoAnalyze/",
                         "Instruction at pc (" + pc + ") with type of Interest " + parameterType + " will be processed at " + (params.size - 1 - index) + "\n Instruction: \n" + instruction
                       )
-                      processOrigins(
-                        params.size - 1 - index,
-                        new SinkInfo(invoke.declaringClass, sig, pc),
-                        method,
-                        project,
-                        result
-                      )
-                    } else {
-                      //println("ParamaterType " + parameterType + " classified as NonCharSeq. At " + method.classFile.fqn + "->" + method.name + "\n")
+
+                      val classSlicingContext = ClassSlicingContext.fromConstructorInvocation(instruction.asMethodInvocationInstruction, parameterType)
+
+                      // The context may not be defined in cases where the parameters are irrelevant
+                      if (classSlicingContext.isDefined) {
+                        processOrigins(
+                          params.size - 1 - index,
+                          new SinkInfo(invoke.declaringClass, sig, pc),
+                          method,
+                          project,
+                          classSlicingContext.get,
+                          result
+                        )
+                      }
+
+
                     }
                   }
 
@@ -334,6 +340,7 @@ class SlicingClassAnalysis(
       sinkInfo: SinkInfo,
       method: Method,
       project: Project[URL],
+      context: ClassSlicingContext,
       result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] }
   ): Unit = {
 
@@ -365,7 +372,7 @@ class SlicingClassAnalysis(
                 sinkInfo,
                 project,
                 method: Method,
-                ObjectType.String,
+                context,
                 result
               )
             )
@@ -385,7 +392,7 @@ class SlicingClassAnalysis(
                 sinkInfo,
                 project,
                 method: Method,
-                ObjectType("java/nio/ByteBuffer"),
+                context,
                 result
               )
             )
@@ -403,7 +410,7 @@ class SlicingClassAnalysis(
                 sinkInfo,
                 project,
                 method: Method,
-                ObjectType.String,
+                context,
                 result
               )
             )
@@ -425,7 +432,7 @@ class SlicingClassAnalysis(
       sinkInfo: SinkInfo,
       project: Project[URL],
       method: Method,
-      typeOfInterest: ObjectType,
+      context: ClassSlicingContext,
       result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] }
   ): Unit = {
     // QAMIL : macht Opcode bei origin überhaupt Sinn? Sieht nämlich eher so aus, als sei das die
@@ -502,7 +509,7 @@ class SlicingClassAnalysis(
               origin,
               result,
               sinkInfo,
-              typeOfInterest
+              context
             )(project)
 
             if (
@@ -520,7 +527,7 @@ class SlicingClassAnalysis(
               origin,
               result,
               sinkInfo,
-              typeOfInterest
+              context
             )(project)
 
           case _ ⇒ println("MATCHED NOTHING")
@@ -542,7 +549,7 @@ class SlicingClassAnalysis(
       origin: ValueOrigin,
       result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] },
       sinkInfo: SinkInfo,
-      typeOfInterest: ObjectType
+      context: ClassSlicingContext
   )(implicit project: Project[_]): AnyVal = {
     if (first) {
       allThreads = Thread.getAllStackTraces
@@ -558,9 +565,9 @@ class SlicingClassAnalysis(
         val methodClassFile = method.classFile
         // QAMIL: TODO: Was ist die genaue Aufgabe von accociatedMethodString? Nochmal rausfinden und umbenennen
         val (builtMethodTemplate, associatedMethodString) =
-          buildMethod(method, origin, typeOfInterest, result, sinkInfo.sinkPC)
+          buildMethod(method, origin, context, result, sinkInfo.sinkPC)
 
-        if (builtMethodTemplate isDefined) {
+        if (builtMethodTemplate.isDefined) {
           val modifiedMethod = builtMethodTemplate.get
 
           //qamil ##### DUMP
@@ -677,7 +684,7 @@ class SlicingClassAnalysis(
             method,
             sinkInfo,
             associatedMethodString,
-            typeOfInterest
+            context
           )
 
           println(if (success) "Erfolg" else "Kein Erfolg")
@@ -797,7 +804,7 @@ class SlicingClassAnalysis(
   def buildMethod(
       method: Method,
       origin: ValueOrigin,
-      typeOfInterest: ObjectType,
+      context: ClassSlicingContext,
       result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] },
       loi: Int
   )(implicit project: Project[_]): (Option[MethodTemplate], Option[String]) = {
@@ -809,7 +816,7 @@ class SlicingClassAnalysis(
     val slicer = new ClassDeobfuscationSlicer(method, origin, result, loi)
     slicer.doSlice()
 
-    val m = slicer.buildMethodFromSlice(typeOfInterest)
+    val m = slicer.buildMethodFromSlice(context.dateTypeOfInterest)
 
     if (
       // Qamil: Sobald einer der ParameterTypen keinem CharSequenceObjectTypes entspricht, wird das MethodTemplate verworfen. WARUM?
@@ -834,7 +841,7 @@ class SlicingClassAnalysis(
       method: Method,
       sinkInfo: SinkInfo,
       encStringOption: Option[String],
-      typeOfInterest: ObjectType
+      context: ClassSlicingContext
   ): Boolean = {
 
     // qamil: Der ClassLoader ist ein ClassLoader, welcher bereits die Bytedaten der zu ladenen Klassen beinhaltet
@@ -844,7 +851,7 @@ class SlicingClassAnalysis(
     )
 
     val leakerClass = {
-      if (typeOfInterest == ObjectType.String)
+      if (context.dateTypeOfInterest == ObjectType.String)
         cl.loadClass("slicing.StringLeaker")
       else cl.loadClass("slicing.ByteBufferLeaker")
     }
@@ -868,7 +875,7 @@ class SlicingClassAnalysis(
         method,
         sinkInfo,
         encStringOption,
-        typeOfInterest
+        context
       )
     } else if (modifiedMethod.name == "<init>") {
       println("constructor <init>")
@@ -881,7 +888,7 @@ class SlicingClassAnalysis(
         method,
         sinkInfo,
         encStringOption,
-        typeOfInterest
+        context
       )
     } else if (constructors.nonEmpty || modifiedMethod.isStatic) {
       println("constructor nonEmpty or staticMethod")
@@ -922,7 +929,7 @@ class SlicingClassAnalysis(
         method,
         sinkInfo,
         encStringOption,
-        typeOfInterest
+        context
       )
     } else {
       attempts.decrementAndGet()
@@ -963,7 +970,7 @@ class SlicingClassAnalysis(
             method,
             sinkInfo,
             encStringOption,
-            typeOfInterest
+            context
           )
         } catch {
           case _: Throwable =>
@@ -1626,12 +1633,12 @@ class SlicingClassAnalysis(
       originalMethod: Method,
       sinkInfo: SinkInfo,
       encStringOption: Option[String],
-      typeOfInterest: ObjectType
+      context: ClassSlicingContext
   ): Boolean = {
     println("invoking reflection")
     // TODO:
     jvmMethod.invoke(instance, params: _*)
-    logResult(resultClass, originalMethod, sinkInfo, encStringOption, typeOfInterest)
+    logResult(resultClass, originalMethod, sinkInfo, encStringOption, context)
   }
 
   def logResult(
@@ -1639,13 +1646,13 @@ class SlicingClassAnalysis(
       originalMethod: Method,
       sinkInfo: SinkInfo,
       encStringOption: Option[String],
-      typeOfInterest: ObjectType
+      context: ClassSlicingContext
   ): Boolean = {
     println("logResult: Getting Result field")
     val resField = resultClass.getDeclaredField("result")
     println("logResult: Setting Result Field Accessible")
     resField.setAccessible(true)
-    if (typeOfInterest == ObjectType.String) {
+    if (context.dateTypeOfInterest == ObjectType.String) {
       println("logResult: The Type of Interest is a String")
       val res = resField.get(null).asInstanceOf[String]
       if (res.nonEmpty && res != "null") {
