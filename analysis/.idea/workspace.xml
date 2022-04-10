@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Using APKs to analyse apps">
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Added Error Handling to Asset Streaming and refactored buildMethod() for classes">
+      <change afterPath="$PROJECT_DIR$/src/main/scala/helper/Leaker.scala" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/audience_network.dex" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/simplelogger.properties" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/helper/APKRepackager.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/helper/APKManager.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/helper/APKManager.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/helper/APKManager.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -267,7 +270,7 @@
       <workItem from="1648575406763" duration="15138000" />
       <workItem from="1648731676845" duration="21065000" />
       <workItem from="1649187252560" duration="23167000" />
-      <workItem from="1649346130330" duration="17861000" />
+      <workItem from="1649346130330" duration="23210000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -367,7 +370,14 @@
       <option name="project" value="LOCAL" />
       <updated>1649418741629</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Added Error Handling to Asset Streaming and refactored buildMethod() for classes">
+      <created>1649589162409</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1649589162409</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -435,7 +445,8 @@
     <MESSAGE value="Extracted DummyClass out of SlicingClassAnalysis" />
     <MESSAGE value="Refactored mocking mechanic" />
     <MESSAGE value="Using APKs to analyse apps" />
-    <option name="LAST_COMMIT_MESSAGE" value="Using APKs to analyse apps" />
+    <MESSAGE value="Added Error Handling to Asset Streaming and refactored buildMethod() for classes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added Error Handling to Asset Streaming and refactored buildMethod() for classes" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

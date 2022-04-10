@@ -21,15 +21,16 @@ object APKManager {
 }
 
 class APKManager(pathToAPK: String) {
-  import helper.APKManager.jarDirectory
+  import helper.APKManager.{jarDirectory, userDir}
 
   private val apkName = pathToAPK.split("/").last
   val pathToJAR: String = s"$jarDirectory/$apkName.jar"
-  private val jarFile = new File(pathToJAR)
+  val pathToResultsDirectory: String = s"$userDir/results/$apkName/"
+  private val jarFile = getJarFile
+  val resultsDirectory : File = getResultsDirectory
+  val leaker : Leaker = new Leaker(this)
 
   private val stdLib: File = org.opalj.bytecode.RTJar
-
-  repackageJarIfNeeded()
 
   private val androidLib = new File(AndroidJarAnalysis.identifyAndroidJar(jarFile))
   val opalProject : Project[URL] = Project(Array(jarFile), Array(stdLib, androidLib))
@@ -47,7 +48,22 @@ class APKManager(pathToAPK: String) {
     }
   }
 
-  private def repackageJarIfNeeded() : Unit = {
+  private def getJarFile : File = {
+    val jarFile = new File(pathToJAR)
+    createRepackagedJarIfNeeded(jarFile)
+    jarFile
+  }
+
+
+  private def getResultsDirectory : File = {
+    val resultsDirectoryFile = new File(pathToResultsDirectory)
+    if (!resultsDirectoryFile.exists()) {
+      resultsDirectoryFile.mkdir()
+    }
+    resultsDirectoryFile
+  }
+
+  private def createRepackagedJarIfNeeded(jarFile: File) : Unit = {
     if (!jarFile.exists()) {
       println(s"Repackaging $apkName into JAR...")
       val repackagingResult = Process(

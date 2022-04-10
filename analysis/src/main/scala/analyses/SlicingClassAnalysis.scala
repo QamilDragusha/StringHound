@@ -1680,13 +1680,9 @@ class SlicingClassAnalysis(
       false
     } else {
       println("logResult: The type of interest is NOT a String, getting the field as a ByteBuffer")
-      val res = resField.get(null).asInstanceOf[ByteBuffer]
-      println("Revealing the byte buffer")
-      println("resfield: " + resField)
-      println("res: " + res)
-
-      resultStream.append(res.array().mkString(""))
-      resultStream.flush()
+      val leakedResult = resField.get(null).asInstanceOf[ByteBuffer]
+      // qamil: TODO: Not always clear whether this should actually result in a dex file
+      apkManager.leaker.leakDexFile(leakedResult)
       true
     }
 
