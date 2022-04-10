@@ -1,14 +1,15 @@
 package helper
 
-import main.StringDecryption.{ErrorLogger, stdLib}
+import main.StringDecryption.ErrorLogger
 import org.opalj.br.analyses.Project
 import org.opalj.log.OPALLogger
 
-import java.io.File
+import java.io.{File, InputStream}
 import java.net.URL
+import java.util.zip.ZipFile
 import scala.sys.process.Process
 
-object APKRepackager {
+object APKManager {
   private val userDir: String = System.getProperty("user.dir")
   private val jarDirectory: String = s"$userDir/jars"
   private val jarDirectoryFile = new File(jarDirectory)
@@ -19,8 +20,8 @@ object APKRepackager {
   }
 }
 
-class APKRepackager(pathToAPK: String) {
-  import helper.APKRepackager.jarDirectory
+class APKManager(pathToAPK: String) {
+  import helper.APKManager.jarDirectory
 
   private val apkName = pathToAPK.split("/").last
   val pathToJAR: String = s"$jarDirectory/$apkName.jar"
@@ -34,6 +35,17 @@ class APKRepackager(pathToAPK: String) {
   val opalProject : Project[URL] = Project(Array(jarFile), Array(stdLib, androidLib))
 
   OPALLogger.updateLogger(opalProject.logContext, ErrorLogger)
+
+  private val apkZipFile = new ZipFile(pathToAPK)
+
+  def getAssetStream(pathToAsset: String) : InputStream = {
+    class AssetStreamAccessException extends RuntimeException
+    try {
+       apkZipFile.getInputStream(apkZipFile.getEntry(s"assets/$pathToAsset"))
+    } catch {
+      case _ : Throwable => throw new AssetStreamAccessException()
+    }
+  }
 
   private def repackageJarIfNeeded() : Unit = {
     if (!jarFile.exists()) {

@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Refactored mocking mechanic">
-      <change afterPath="$PROJECT_DIR$/src/main/scala/helper/APKRepackager.scala" afterDir="false" />
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Using APKs to analyse apps">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/main/StringDecryption.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/main/StringDecryption.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/helper/APKRepackager.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/helper/APKManager.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -268,7 +267,7 @@
       <workItem from="1648575406763" duration="15138000" />
       <workItem from="1648731676845" duration="21065000" />
       <workItem from="1649187252560" duration="23167000" />
-      <workItem from="1649346130330" duration="15132000" />
+      <workItem from="1649346130330" duration="17861000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -361,7 +360,14 @@
       <option name="project" value="LOCAL" />
       <updated>1649414352214</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Using APKs to analyse apps">
+      <created>1649418741629</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1649418741629</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -428,7 +434,8 @@
     <MESSAGE value="Mocked Context and AssetManager, now able to successfully leak ByteBuffers" />
     <MESSAGE value="Extracted DummyClass out of SlicingClassAnalysis" />
     <MESSAGE value="Refactored mocking mechanic" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactored mocking mechanic" />
+    <MESSAGE value="Using APKs to analyse apps" />
+    <option name="LAST_COMMIT_MESSAGE" value="Using APKs to analyse apps" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

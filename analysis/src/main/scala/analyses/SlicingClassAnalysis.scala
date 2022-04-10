@@ -9,7 +9,7 @@ import java.util.{Timer, TimerTask}
 import classifier.{MethodClassifier, StringClassifier}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
-import helper.{APKRepackager, ClassLoaderFinder}
+import helper.{APKManager, ClassLoaderFinder}
 import main.StringDecryption
 import org.apache.commons.lang3.ClassUtils
 import org.mockito.Mockito.{mock, when, withSettings}
@@ -44,8 +44,8 @@ class SlicingClassAnalysis(
     val parameters: Seq[String]
 ) {
 
-  private val apkRepackager = new APKRepackager(pathToApk)
-  private val project = apkRepackager.opalProject
+  private val apkManager = new APKManager(pathToApk)
+  private val project = apkManager.opalProject
 
 
   implicit val projectToAnalyze: Project[URL] = project
@@ -700,7 +700,7 @@ class SlicingClassAnalysis(
         }
       } catch {
         case ex: java.lang.VerifyError =>
-          println("Nullptr Exception " + ex)
+          println("Exception " + ex)
           verifyErrors.incrementAndGet()
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
@@ -812,24 +812,7 @@ class SlicingClassAnalysis(
     )
 
     val slicer = new ClassDeobfuscationSlicer(method, origin, result, loi)
-    val slicedPCs = slicer.doSlice()
-    val instructions = method.body.get.instructions
-    // QAMIL: Wird ausschließlich INNERHALB einer MEthode gesliced (?)
-    var str: Option[String] = None
-
-    /*
-    // QAMIL: Ist das hier überhaupt relevant für die Klassen-Deobfuszierung?
-    slicedPCs.toChain.toList.foreach { pc =>
-      if (instructions.length > pc)
-        instructions(pc) match {
-          case LoadString(s) =>
-            if (StringClassifier.classify(s)) str = Some(s)
-          case LoadString_W(s) =>
-            if (StringClassifier.classify(s)) str = Some(s)
-          case _ =>
-        }
-    }
-     */
+    slicer.doSlice()
 
     val m = slicer.buildMethodFromSlice(typeOfInterest)
 
@@ -841,11 +824,10 @@ class SlicingClassAnalysis(
     ) {
       println("buildMethod would return nothing")
       usesParams.incrementAndGet()
-      //(None, str)
-      // qamil: Testen, was passiert, wenn wir ParameterTypen einfach so weitergeben. Klappt das so oder muss es angepasst werden?
-      (Some(m), str)
+      // qamil: TODO: Refactor to only return method
+      (Some(m), None)
     } else {
-      (Some(m), str)
+      (Some(m), None)
     }
   }
 
@@ -1044,7 +1026,7 @@ class SlicingClassAnalysis(
       def answer(invocation: InvocationOnMock): Object = {
         val path : String = invocation.getArgument(0)
         // assuming the file is already located in the resources folder
-        new FileInputStream(s"resources/$path")
+        apkManager.getAssetStream(path)
       }
     })
 
