@@ -141,8 +141,6 @@ class SlicingClassAnalysis(
     setupAnalysis(bf, debug, isAndroid)
 
     val start = Instant.now()
-    // QAMIL Making sure that String Classifier is initialized, will otherwise cause an java.lang.NoClassDefFoundError
-    StringClassifier.classify("dummy")
 
     val t1, t2, t3 = System.currentTimeMillis()
 
@@ -150,16 +148,13 @@ class SlicingClassAnalysis(
 
     val classLoaderInstatiations =
       classLoaderFinder.findClassLoaderInstantiations()
-    // TODO: Das bringt nichts??
-    // val classLoaderUsages = classLoaderFinder.findClassLoaderUsages()
 
     val methodInstructionsToAnalyze =
-      classLoaderInstatiations //concatTransitive classLoaderUsages
+      classLoaderInstatiations
 
     println("printed methodInstructionsInstatiatingClassLoaders")
 
     if (methodInstructionsToAnalyze.nonEmpty) {
-      //val methodsInvokingCLInstantiatingMethods = findMethodInvokations(methodInstructionsInstatiatingClassLoaders)
 
       System.setOut(out)
       println("Methods to slice: " + methodInstructionsToAnalyze.size)
@@ -1654,7 +1649,8 @@ class SlicingClassAnalysis(
       println("logResult: The Type of Interest is a String")
       val res = resField.get(null).asInstanceOf[String]
       if (res.nonEmpty && res != "null") {
-        val cl = StringClassifier.classify(res)
+        // qamil: TODO: Check whether that can stay as is and how it should be handled
+         val cl = false // StringClassifier.classify(res)
         if (
           (sinkInfo.sinkMethod != "bruteForce" || !cl) && (encStringOption.isEmpty ||
           !res.contains(encStringOption.get))
