@@ -26,8 +26,10 @@ class APKManager(pathToAPK: String) {
   private val apkName = pathToAPK.split("/").last
   val pathToJAR: String = s"$jarDirectory/$apkName.jar"
   val pathToResultsDirectory: String = s"$userDir/results/$apkName/"
+  val pathToDataDir: String = s"$pathToResultsDirectory/dataDir/"
   private val jarFile = getJarFile
   val resultsDirectory : File = getResultsDirectory
+  val dataDirectory : File = getAppSpecificDataDirectory
   val leaker : Leaker = new Leaker(this)
 
   private val stdLib: File = org.opalj.bytecode.RTJar
@@ -56,11 +58,19 @@ class APKManager(pathToAPK: String) {
 
 
   private def getResultsDirectory : File = {
-    val resultsDirectoryFile = new File(pathToResultsDirectory)
-    if (!resultsDirectoryFile.exists()) {
-      resultsDirectoryFile.mkdir()
+    createFileWithDirectory(pathToResultsDirectory)
+  }
+
+  private def getAppSpecificDataDirectory : File = {
+    createFileWithDirectory(pathToDataDir)
+  }
+
+  private def createFileWithDirectory(path: String) : File = {
+    val file = new File(path)
+    if (!file.exists()) {
+      file.mkdir()
     }
-    resultsDirectoryFile
+    file
   }
 
   private def createRepackagedJarIfNeeded(jarFile: File) : Unit = {

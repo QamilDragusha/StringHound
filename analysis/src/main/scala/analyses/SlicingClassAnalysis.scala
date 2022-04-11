@@ -30,9 +30,11 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.res.AssetManager
 import customBRClasses.dummy.DummyClass
+import helper.androidMocks.{MockedApplicationInfo, MockedScalaApplicationInfo}
 import models.ClassSlicingContext
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.invocation.InvocationOnMock
+import org.mockito.mock.MockCreationSettings
 import org.mockito.stubbing.Answer
 
 import java.nio.ByteBuffer
@@ -117,17 +119,24 @@ class SlicingClassAnalysis(
     }
   }
 
-  val relevantSinks: Set[String] = Source
-    .fromFile("relevantSinks.txt")
-    .getLines()
-    .filter(l => l.nonEmpty && l.startsWith("<"))
-    .map { l =>
-      val split = l.substring(1, l.lastIndexOf('>')).split(": ")
-      val fqn = split(0)
-      val methodSignature = MethodSignatureWrapper(split(1)).toString
-      fqn + " " + methodSignature
-    }
-    .toSet
+  val relevantSinks: Set[String] = {
+    val relevantSinksSource = Source
+      .fromFile("relevantSinks.txt")
+
+    val relevantSinks = relevantSinksSource.getLines().
+      filter(l => l.nonEmpty && l.startsWith("<"))
+      .map { l =>
+        val split = l.substring(1, l.lastIndexOf('>')).split(": ")
+        val fqn = split(0)
+        val methodSignature = MethodSignatureWrapper(split(1)).toString
+        fqn + " " + methodSignature
+      }
+      .toSet
+
+    relevantSinksSource.close()
+
+    relevantSinks
+  }
 
   var decryptionContextSet =
     Map.empty[Method, (MethodTemplate, Set[ClassFile], ClassFile)]
@@ -1023,6 +1032,7 @@ class SlicingClassAnalysis(
   def mockContextInstance() : Context = {
     val instance = mock(classOf[Context])
     val assetManager = mock(classOf[AssetManager])
+    val applicationInfo = mock(classOf[ApplicationInfo])
 
     when(assetManager.open(anyString())).thenAnswer(new Answer[Any](){
       def answer(invocation: InvocationOnMock): Object = {
@@ -1032,11 +1042,29 @@ class SlicingClassAnalysis(
       }
     })
 
+
     when(instance.getAssets).thenAnswer(new Answer[Any](){
       def answer(invocation: InvocationOnMock) : Object = {
         assetManager
       }
     })
+
+    when(instance.getFilesDir).thenAnswer(new Answer[Any]() {
+      def answer(invocationOnMock: InvocationOnMock) : Object = {
+        apkManager.dataDirectory
+      }
+    })
+
+
+    /*
+    when(instance.getApplicationInfo).thenAnswer(new Answer[Any]() {
+      def answer(invocation: InvocationOnMock): Object = {
+         //new MockedScalaApplicationInfo(apkManager)
+        applicationInfo
+      }
+    })
+    */
+
 
     instance
   }
@@ -1637,8 +1665,13 @@ class SlicingClassAnalysis(
   ): Boolean = {
     println("invoking reflection")
     // TODO:
-    jvmMethod.invoke(instance, params: _*)
-    logResult(resultClass, originalMethod, sinkInfo, encStringOption, context)
+    try {
+      jvmMethod.invoke(instance, params: _*)
+      println("invoked reflection")
+      return logResult(resultClass, originalMethod, sinkInfo, encStringOption, context)
+    } catch {
+      case e : Throwable => println(s"Exception $e");  false
+    }
   }
 
   def logResult(
