@@ -41,8 +41,7 @@ class Leaker(apkManager: APKManager) {
 
     file.createNewFile()
 
-    val outputChannel = new FileOutputStream(file, false).getChannel
-    dexBuffer.flip()
+    val outputChannel = new FileOutputStream(file, true).getChannel
     outputChannel.write(dexBuffer)
     outputChannel.close()
   }
