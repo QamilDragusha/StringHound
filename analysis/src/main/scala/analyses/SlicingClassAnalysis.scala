@@ -32,7 +32,7 @@ import android.content.res.AssetManager
 import customBRClasses.dummy.DummyClass
 import helper.androidMocks.{MockedApplicationInfo, MockedScalaApplicationInfo}
 import models.ClassSlicingContext
-import org.mockito.ArgumentMatchers.anyString
+import org.mockito.ArgumentMatchers.{anyInt, anyString}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.mock.MockCreationSettings
 import org.mockito.stubbing.Answer
@@ -844,13 +844,13 @@ class SlicingClassAnalysis(
 
   // QAMIL: TODO: Nachverfolgen, anhand den dumps schauen, warum die Reflections hier fehlschlagen, oder ob das eine Anti-Deobfuszierungstechnik ist
   def callReflectiveMethod(
-      modifiedMethod: MethodTemplate,
-      cl: ClassLoader,
-      cf: ClassFile,
-      method: Method,
-      sinkInfo: SinkInfo,
-      encStringOption: Option[String],
-      context: ClassSlicingContext
+                            modifiedMethod: MethodTemplate,
+                            classLoader: ClassLoader,
+                            cf: ClassFile,
+                            method: Method,
+                            sinkInfo: SinkInfo,
+                            encStringOption: Option[String],
+                            context: ClassSlicingContext
   ): Boolean = {
 
     // qamil: Der ClassLoader ist ein ClassLoader, welcher bereits die Bytedaten der zu ladenen Klassen beinhaltet
@@ -861,12 +861,12 @@ class SlicingClassAnalysis(
 
     val leakerClass = {
       if (context.dataTypeOfInterest == ObjectType.String)
-        cl.loadClass("slicing.StringLeaker")
-      else cl.loadClass("slicing.ByteBufferLeaker")
+        classLoader.loadClass("slicing.StringLeaker")
+      else classLoader.loadClass("slicing.ByteBufferLeaker")
     }
 
     // qamil: Hier wird nur der FQN weitergegeben => com.google.android.gms.dynamite.DynamiteModule
-    val clazz = cl.loadClass(cf.thisType.toJava)
+    val clazz = classLoader.loadClass(cf.thisType.toJava)
     var successful = false
     //                        try {
     val constructors =
@@ -921,7 +921,7 @@ class SlicingClassAnalysis(
 
       // qamil: Hier werden passende Parametertypen instanziiert, um die Methode aufrufen zu können
       val params: Array[_ <: Object] = jvmMethod.getParameterTypes
-        .map(tryToCreateInstance)
+        .map{clazz => tryToCreateInstance(clazz, classLoader)}
         .map(
           _.asInstanceOf[Object]
         )
@@ -952,7 +952,7 @@ class SlicingClassAnalysis(
         try {
           val constructorParams: Array[_ <: Object] =
             constructor.getParameterTypes
-              .map(tryToCreateInstance)
+              .map{clazz => tryToCreateInstance(clazz, classLoader)}
               .map(
                 _.asInstanceOf[Object]
               )
@@ -967,7 +967,7 @@ class SlicingClassAnalysis(
 
 
           val params: Array[_ <: Object] = jvmMethod.getParameterTypes
-            .map(tryToCreateInstance)
+            .map{clazz => tryToCreateInstance(clazz, classLoader)}
             .map(_.asInstanceOf[Object])
 
 
@@ -989,7 +989,7 @@ class SlicingClassAnalysis(
     successful
   }
 
-  def tryToCreateInstance[T](clazz: Class[_]): Any = {
+  def tryToCreateInstance[T](clazz: Class[_], classLoader: ClassLoader): Any = {
     if (clazz.isPrimitive) {
       //throw new NullPointerException()
       ClassUtils.primitiveToWrapper(clazz) match {
@@ -1014,25 +1014,30 @@ class SlicingClassAnalysis(
       if (const.isDefined) {
         const.get.newInstance()
       } else {
-        tryToMockInstance(clazz)
+        tryToMockInstance(clazz, classLoader)
       }
     }
   }
 
-  def tryToMockInstance(classToMock: Class[_]) : Any = {
+  def tryToMockInstance(classToMock: Class[_], classLoader: ClassLoader) : Any = {
     val className = classToMock.getName
 
     if (className == "android.content.Context") {
-      return mockContextInstance()
+      return mockContextInstance(classLoader)
     }
 
     null
   }
 
-  def mockContextInstance() : Context = {
+  def mockContextInstance(classLoader : ClassLoader) : Context = {
     val instance = mock(classOf[Context])
     val assetManager = mock(classOf[AssetManager])
     val applicationInfo = mock(classOf[ApplicationInfo])
+
+    val appInfoDataDirField = applicationInfo.getClass.getDeclaredField("dataDir")
+    appInfoDataDirField.setAccessible(true)
+
+    appInfoDataDirField.set(applicationInfo, apkManager.pathToDataDir)
 
     when(assetManager.open(anyString())).thenAnswer(new Answer[Any](){
       def answer(invocation: InvocationOnMock): Object = {
@@ -1055,15 +1060,37 @@ class SlicingClassAnalysis(
       }
     })
 
+    when(instance.getCacheDir).thenAnswer(new Answer[Any]() {
+      def answer(invocationOnMock: InvocationOnMock) : Object = {
+        apkManager.cacheDirectory
+      }
+    })
 
-    /*
+    when(instance.getDir(anyString(), anyInt())).thenAnswer(new Answer[Any]() {
+       def answer(invocation: InvocationOnMock) : Object = {
+         val name : String = invocation.getArgument(0)
+         val mode : Int = invocation.getArgument(1)
+         println(s"name $name with mode $mode")
+         // qamil TODO: create a new directory
+         apkManager.cacheDirectory
+      }
+    })
+
+    when(instance.getClassLoader).thenAnswer(new Answer[Any]() {
+      def answer(invocationOnMock: InvocationOnMock) : Object = {
+        // qamil TODO: Should we do that?
+        classLoader
+      }
+    })
+
+
+
     when(instance.getApplicationInfo).thenAnswer(new Answer[Any]() {
       def answer(invocation: InvocationOnMock): Object = {
-         //new MockedScalaApplicationInfo(apkManager)
         applicationInfo
       }
     })
-    */
+
 
 
     instance

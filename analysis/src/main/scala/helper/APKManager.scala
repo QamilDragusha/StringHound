@@ -24,12 +24,18 @@ class APKManager(pathToAPK: String) {
   import helper.APKManager.{jarDirectory, userDir}
 
   private val apkName = pathToAPK.split("/").last
+
   val pathToJAR: String = s"$jarDirectory/$apkName.jar"
   val pathToResultsDirectory: String = s"$userDir/results/$apkName/"
   val pathToDataDir: String = s"$pathToResultsDirectory/dataDir/"
+  val pathToCacheDir: String = s"$pathToResultsDirectory/cacheDir"
+
   private val jarFile = getJarFile
-  val resultsDirectory : File = getResultsDirectory
-  val dataDirectory : File = getAppSpecificDataDirectory
+
+  lazy val resultsDirectory : File = getResultsDirectory
+  lazy val dataDirectory : File = getAppSpecificDataDirectory
+  lazy val cacheDirectory : File = getAppSpecificCacheDirectory
+
   val leaker : Leaker = new Leaker(this)
 
   private val stdLib: File = org.opalj.bytecode.RTJar
@@ -63,6 +69,10 @@ class APKManager(pathToAPK: String) {
 
   private def getAppSpecificDataDirectory : File = {
     createFileWithDirectory(pathToDataDir)
+  }
+
+  private def getAppSpecificCacheDirectory : File = {
+    createFileWithDirectory(pathToCacheDir)
   }
 
   private def createFileWithDirectory(path: String) : File = {
