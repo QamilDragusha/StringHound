@@ -2,3 +2,4 @@
 */target/config-classes/*
 *.cache
 /jars/
+/target/
