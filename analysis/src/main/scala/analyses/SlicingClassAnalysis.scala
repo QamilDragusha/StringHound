@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Timer, TimerTask}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
-import helper.{APKManager, ClassLoaderFinder}
+import helper.{APKManager, AndroidLibraryMocker, ClassLoaderFinder}
 import main.StringDecryption
 import org.apache.commons.lang3.ClassUtils
 import org.mockito.Mockito.{mock, when, withSettings}
@@ -1038,140 +1038,10 @@ class SlicingClassAnalysis(
     val className = classToMock.getName
 
     if (className == "android.content.Context") {
-      return mockContextInstance(classLoader)
+      return new AndroidLibraryMocker(apkManager).mockContext(classLoader)
     }
 
     null
-  }
-
-  def mockContextInstance(classLoader : ClassLoader) : Context = {
-    val instance = mock(classOf[Context])
-    val assetManager = mock(classOf[AssetManager])
-    val applicationInfo = mock(classOf[ApplicationInfo])
-    val packageInfo = mock(classOf[PackageInfo])
-    val packageManager = mock(classOf[PackageManager])
-    val bundle = mock(classOf[Bundle])
-    val resources = mock(classOf[Resources])
-
-
-    when(bundle.getString(anyString())).thenAnswer(new Answer[Any](){
-      def answer(invocation: InvocationOnMock): Object = {
-        ""
-      }
-    })
-
-    when(bundle.getInt(anyString())).thenAnswer(new Answer[Any](){
-      def answer(invocation: InvocationOnMock): Int = {
-        1
-      }
-    })
-
-    val appInfoDataDirField = applicationInfo.getClass.getDeclaredField("dataDir")
-    appInfoDataDirField.setAccessible(true)
-
-    val packageInfoVersionCodeField = packageInfo.getClass.getDeclaredField("versionCode")
-    packageInfoVersionCodeField.setAccessible(true)
-
-    // metaData is only defined in PackageItemInfo, the superclass of ApplicationInfo
-    val appInfoMetaDataField = applicationInfo.getClass.getSuperclass.getDeclaredField("metaData")
-    appInfoMetaDataField.setAccessible(true)
-
-    appInfoDataDirField.set(applicationInfo, apkManager.pathToDataDir)
-    packageInfoVersionCodeField.set(packageInfo, 0)
-    appInfoMetaDataField.set(applicationInfo, bundle)
-
-
-    when(assetManager.open(anyString())).thenAnswer(new Answer[Any](){
-      def answer(invocation: InvocationOnMock): Object = {
-        val path : String = invocation.getArgument(0)
-        // assuming the file is already located in the resources folder
-        apkManager.getAssetStream(path)
-      }
-    })
-
-
-    when(packageManager.getPackageInfo(anyString(), anyInt())).thenAnswer(new Answer[Any](){
-      def answer(invocation: InvocationOnMock): Object = {
-        packageInfo
-      }
-    })
-
-    when(packageManager.getApplicationInfo(anyString(), anyInt())).thenAnswer(new Answer[Any]() {
-      def answer(invocation: InvocationOnMock): Object = {
-        applicationInfo
-      }
-    })
-
-    when(instance.getPackageManager).thenAnswer(new Answer[Any](){
-      def answer(invocation: InvocationOnMock): Object = {
-        packageManager
-      }
-    })
-
-    // TODO qamil: Might be worth it to think of a way to include the actual package name somehow
-    when(instance.getPackageName).thenAnswer(new Answer[Any](){
-      def answer(invocation: InvocationOnMock): Object = {
-        ""
-      }
-    })
-
-
-    when(instance.getAssets).thenAnswer(new Answer[Any](){
-      def answer(invocation: InvocationOnMock) : Object = {
-        assetManager
-      }
-    })
-
-    when(instance.getFilesDir).thenAnswer(new Answer[Any]() {
-      def answer(invocationOnMock: InvocationOnMock) : Object = {
-        apkManager.dataDirectory
-      }
-    })
-
-    when(instance.getCacheDir).thenAnswer(new Answer[Any]() {
-      def answer(invocationOnMock: InvocationOnMock) : Object = {
-        apkManager.cacheDirectory
-      }
-    })
-
-
-
-    when(instance.getDir(anyString(), anyInt())).thenAnswer(new Answer[Any]() {
-       def answer(invocation: InvocationOnMock) : Object = {
-         val name : String = invocation.getArgument(0)
-         val mode : Int = invocation.getArgument(1)
-         println(s"name $name with mode $mode")
-         // qamil TODO: create a new directory
-         apkManager.cacheDirectory
-      }
-    })
-
-    when(instance.getClassLoader).thenAnswer(new Answer[Any]() {
-      def answer(invocationOnMock: InvocationOnMock) : Object = {
-        // qamil TODO: Should we do that?
-        classLoader
-      }
-    })
-
-
-
-    when(instance.getApplicationInfo).thenAnswer(new Answer[Any]() {
-      def answer(invocation: InvocationOnMock): Object = {
-        applicationInfo
-      }
-    })
-
-    when(instance.getResources).thenAnswer(new Answer[Any]() {
-      def answer(invocation: InvocationOnMock): Object = {
-        resources
-      }
-    })
-
-
-
-
-
-    instance
   }
 
   def fixTime(cf: ClassFile): ClassFile = {
