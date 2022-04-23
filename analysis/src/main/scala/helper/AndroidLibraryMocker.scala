@@ -145,7 +145,8 @@ class AndroidLibraryMocker(apkManager: APKManager) {
 
     when(bundleInstance.getInt(anyString())).thenAnswer(new Answer[Any](){
       def answer(invocation: InvocationOnMock): Int = {
-        1
+        val valueName : String = invocation.getArgument(0)
+        apkManager.androidManifestReader.gracefullyReadApplicationMetaDataInteger(valueName)
       }
     })
 

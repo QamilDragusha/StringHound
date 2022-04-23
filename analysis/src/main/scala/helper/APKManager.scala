@@ -1,5 +1,6 @@
 package helper
 
+import helper.APKManager.decodedApkDirectoryPath
 import main.StringDecryption.ErrorLogger
 import org.opalj.br.analyses.Project
 import org.opalj.log.OPALLogger
@@ -11,12 +12,21 @@ import scala.sys.process.Process
 
 object APKManager {
   private val userDir: String = System.getProperty("user.dir")
+
   private val jarDirectory: String = s"$userDir/jars"
   private val jarDirectoryFile = new File(jarDirectory)
   private def jarDirectoryExists = jarDirectoryFile.exists()
 
+  private val decodedApkDirectoryPath: String = s"$userDir/decodedApks"
+  private val decodedApkDirectory = new File(decodedApkDirectoryPath)
+  private def decodedApkDirectoryExists = decodedApkDirectory.exists()
+
   if (!jarDirectoryExists) {
     jarDirectoryFile.mkdir()
+  }
+
+  if (!decodedApkDirectoryExists) {
+    decodedApkDirectory.mkdir()
   }
 }
 
@@ -30,11 +40,17 @@ class APKManager(pathToAPK: String) {
   val pathToDataDir: String = s"$pathToResultsDirectory/dataDir/"
   val pathToCacheDir: String = s"$pathToResultsDirectory/cacheDir"
 
+  val pathToDecodedAPKDirectory : String = s"$decodedApkDirectoryPath/$apkName"
+
   private val jarFile = getJarFile
 
+  private val decodedAPKDirectory : File = getDecodedAPKDirectory
   lazy val resultsDirectory : File = getResultsDirectory
   lazy val dataDirectory : File = getAppSpecificDataDirectory
   lazy val cacheDirectory : File = getAppSpecificCacheDirectory
+
+  lazy val androidManifestReader = new AndroidManifestReader(decodedAPKDirectory)
+
 
   val leaker : Leaker = new Leaker(this)
 
@@ -47,6 +63,7 @@ class APKManager(pathToAPK: String) {
 
   private val apkZipFile = new ZipFile(pathToAPK)
 
+  // TODO qamil: Das wäre jetzt auch außerhalb der APK möglich?
   def getAssetStream(pathToAsset: String) : InputStream = {
     class AssetStreamAccessException extends RuntimeException
     try {
@@ -58,8 +75,14 @@ class APKManager(pathToAPK: String) {
 
   private def getJarFile : File = {
     val jarFile = new File(pathToJAR)
-    createRepackagedJarIfNeeded(jarFile)
+    createRepackagedJarIfAbsent(jarFile)
     jarFile
+  }
+
+  private def getDecodedAPKDirectory : File = {
+    val decodedAPKDirectory = new File(pathToDecodedAPKDirectory)
+    decodeAPKIfAbsent(decodedAPKDirectory)
+    decodedAPKDirectory
   }
 
 
@@ -83,7 +106,7 @@ class APKManager(pathToAPK: String) {
     file
   }
 
-  private def createRepackagedJarIfNeeded(jarFile: File) : Unit = {
+  private def createRepackagedJarIfAbsent(jarFile: File) : Unit = {
     if (!jarFile.exists()) {
       println(s"Repackaging $apkName into JAR...")
       val repackagingResult = Process(
@@ -101,6 +124,25 @@ class APKManager(pathToAPK: String) {
     } else {
       println(s"Reusing repackaged $apkName.jar for analysis...")
     }
+  }
+
+  private def decodeAPKIfAbsent(decodedApkDirectory: File) : Unit = {
+    if(!decodedApkDirectory.exists()) {
+      println(s"Decoding $apkName...")
+      decodeAPK()
+    } else {
+      println(s"Resusing decoding of $apkName for analysis...")
+    }
+  }
+
+  private def decodeAPK() : Unit = {
+   Process(
+     Seq(
+       "bash",
+       "-c",
+       s"apktool d $pathToAPK -o $pathToDecodedAPKDirectory"
+     )
+   ).!!
   }
 
 
