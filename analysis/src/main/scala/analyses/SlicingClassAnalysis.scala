@@ -21,7 +21,7 @@ import org.opalj.ba.{CLASS, CODE, CodeAttributeBuilder, CodeElement, FIELD, FIEL
 import org.opalj.bc.Assembler
 import org.opalj.bi.ACC_PUBLIC
 import org.opalj.br.analyses.{Project, StringConstantsInformationKey}
-import org.opalj.br.instructions.{MethodInvocationInstruction, _}
+import org.opalj.br.instructions._
 import org.opalj.br.{PCInMethod, _}
 import org.opalj.collection.immutable.{ConstArray, RefArray}
 import org.opalj.slicing.{ClassDeobfuscationSlicer, DeobfuscationSlicer, ParameterUsageException, SlicingConfiguration}
@@ -31,7 +31,6 @@ import android.content.pm.{ApplicationInfo, PackageInfo, PackageManager}
 import android.content.res.{AssetManager, Resources}
 import android.os.Bundle
 import customBRClasses.dummy.DummyClass
-import helper.androidMocks.{MockedApplicationInfo, MockedScalaApplicationInfo}
 import models.ClassSlicingContext
 import org.mockito.ArgumentMatchers.{anyInt, anyString}
 import org.mockito.invocation.InvocationOnMock
