@@ -1,5 +1,5 @@
 *.class
 */target/config-classes/*
 *.cache
-/jars/
-/target/
+*/jars/*
+*/target/*
