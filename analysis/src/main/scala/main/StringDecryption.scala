@@ -139,6 +139,7 @@ object StringDecryption {
           println(count + ": " + jar)
         } catch {
           case e: Throwable =>
+            println("StringDecryption Exception: ")
             logger.error(jar.getAbsolutePath)
             logger.error(e.getMessage)
             logger.error(e.getStackTrace.mkString("\n"))
@@ -169,6 +170,7 @@ object StringDecryption {
           println(count + ": " + jar + "\t time: " + dateFormat.format(date))
         } catch {
           case e: Throwable =>
+            println("StringDec Exception")
             logger.error(jar.getAbsolutePath)
             logger.error(e.getMessage)
             logger.error(e.getStackTrace.mkString("\n"))
@@ -195,6 +197,7 @@ object StringDecryption {
 
     } catch {
       case e : Throwable => {
+        println("StringDec Exception")
         println(e)
         logger.error(parameters.head)
         logger.error(e.getMessage)
@@ -239,6 +242,7 @@ object StringDecryption {
     } catch {
 
       case e: Throwable =>
+        println("StringDec Ex")
         println(e)
         logger.error(parameters.head)
         logger.error(e.getMessage)

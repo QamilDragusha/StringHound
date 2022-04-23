@@ -80,11 +80,12 @@ object Dumper {
 
   }
 
-  def dumpMethodTemplate(methodTemplate: MethodTemplate, resultSubDirectory: String = "methodTemplates/", message: String = null) : Unit = {
+  def dumpMethodTemplate(methodTemplate: MethodTemplate, resultSubDirectory: String = "methodTemplates/", message: String = null, className: String = "") : Unit = {
     if (!allowAnyDumping) return
     if (!methodTemplates) return
 
-    val fileName = methodTemplate.name
+    val fileName = className + "-" + methodTemplate.name
+
 
     dumpCode(methodTemplate.body.get, fileName, resultSubDirectory, message, force = true)
   }

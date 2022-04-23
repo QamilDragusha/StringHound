@@ -27,8 +27,9 @@ import org.opalj.collection.immutable.{ConstArray, RefArray}
 import org.opalj.slicing.{ClassDeobfuscationSlicer, DeobfuscationSlicer, ParameterUsageException, SlicingConfiguration}
 import org.opalj.util.InMemoryAndURLClassLoader
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.res.AssetManager
+import android.content.pm.{ApplicationInfo, PackageInfo, PackageManager}
+import android.content.res.{AssetManager, Resources}
+import android.os.Bundle
 import customBRClasses.dummy.DummyClass
 import helper.androidMocks.{MockedApplicationInfo, MockedScalaApplicationInfo}
 import models.ClassSlicingContext
@@ -96,7 +97,8 @@ class SlicingClassAnalysis(
   val cleanTask: TimerTask = new TimerTask() {
     override def run(): Unit = {
       if (!debug) {
-        clean = true
+        // TODO: QAMIL: Das muss wieder rückgängig gemacht werden
+         clean = true
       }
     }
   }
@@ -159,7 +161,8 @@ class SlicingClassAnalysis(
       classLoaderFinder.findClassLoaderInstantiations()
 
     val methodInstructionsToAnalyze =
-      classLoaderInstatiations
+      classLoaderInstatiations. // TODO: Qamil: Nut für Debugging-Zwecke.
+        filter{ clIn => clIn._1.classFile.fqn.contains("zzfy") }
 
     println("printed methodInstructionsInstatiatingClassLoaders")
 
@@ -231,7 +234,7 @@ class SlicingClassAnalysis(
                       // The context may not be defined in cases where the parameters are irrelevant
                       if (classSlicingContext.isDefined) {
                         processOrigins(
-                          params.size - 1 - index,
+                          params.size - 1 -  index,
                           new SinkInfo(invoke.declaringClass, sig, pc),
                           method,
                           project,
@@ -250,6 +253,7 @@ class SlicingClassAnalysis(
             }
           } catch {
             case e: Throwable ⇒
+              println(s"doAnalyze catched exception $e")
               if (StringDecryption.logSlicing) {
                 val sb = new StringBuilder()
                 sb.append(parameters.head + "\n")
@@ -330,6 +334,7 @@ class SlicingClassAnalysis(
         .toSet
     } catch {
       case _: Throwable =>
+        println("Throwable without print")
         // qamil: Brauchen wir das mit dem CallGraphen überhaupt?
         val callGraph = CallGraphFactory.createCHACallGraph(project)
         methodsInvokingMethodsOfInterest = methodsOfInterest
@@ -359,11 +364,12 @@ class SlicingClassAnalysis(
     if (operands == null) return
     //println("after return: index = " + index + ", sinkInfo = " + sinkInfo + ", method = " + method + ", project = " + "project" + ", resultDomain = " + result.domain)
     val op = operands(index)
-    println("matching op")
+    val methodClass = method.classFile.fqn
+    println(s"matching op with index $index from $methodClass and method $method")
     op match {
       case result.domain.StringValue(
             s
-          ) ⇒ // Not Obfuscated or deob method // Sollte ich vllt nachverfolgen wenn ein String hierdrinsteht, manche Klassen stehen im Klartext
+          ) ⇒ println("We are missing a single String ")// Not Obfuscated or deob method // Sollte ich vllt nachverfolgen wenn ein String hierdrinsteht, manche Klassen stehen im Klartext
        println("StringValue" + s)
       // QAMIL : Scheint bei den Methoden hier die Regel zu sein
       case result.domain.DomainReferenceValueTag(v) ⇒
@@ -373,6 +379,7 @@ class SlicingClassAnalysis(
           v.allValues
             .exists(p => p.upperTypeBound.containsId(ObjectType.String.id))
         ) {
+
           result.domain
             .originsIterator(op)
             .foreach(
@@ -407,12 +414,18 @@ class SlicingClassAnalysis(
             )
         }
 
+        else {
+          val types = v.allValues.mkString(" - ")
+          println(s"No type of interest was found, may be null. Types: $types ")
+        }
+
       case result.domain.MultipleReferenceValues(s) ⇒
         s.foreach {
 
-          case result.domain.StringValue(st) ⇒ //println("DOMAINMULTIPLEREFERENCEVALUES") // Not Obfuscated or deob method
+          case result.domain.StringValue(st) ⇒ println("Here is a String we have ignored") //println("DOMAINMULTIPLEREFERENCEVALUES") // Not Obfuscated or deob method
           case value ⇒
             //println("DOMAINMULTIPLEREFERENCEVALUES")
+            println("V: " + value.allValues.mkString(" - "))
             value.origins.foreach(
               buildMethodForOrigin(
                 _,
@@ -544,6 +557,7 @@ class SlicingClassAnalysis(
         }
       } catch {
         case ex: Throwable =>
+          println("Throwable thrown")
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
             StringDecryption.logger.error(ex.getMessage)
@@ -601,6 +615,7 @@ class SlicingClassAnalysis(
             )
             .head
 
+          // TODO: Qamil: Checke, ob die relevanten Klassen auch transitiv geladen wird
           val (relevantMethods, relevantFields, relevantClasses) =
             getAccessedFieldsMethodsAndClasses(
               modifiedClass,
@@ -681,7 +696,7 @@ class SlicingClassAnalysis(
 
           // QAMIL: NOCHMAL DIE (GESLICEDTE) METHOD VOR DER AUSFÜHRUNG DUMPEN #######
 
-          Dumper.dumpMethodTemplate(modifiedMethod, "buildAndCallMethod/")
+          Dumper.dumpMethodTemplate(modifiedMethod, "buildAndCallMethod/", className = method.classFile.fqn.split("/").last)
           Dumper
             .dumpClassFile(redirectedClass, "classFiles/", "Origin = " + origin)
 
@@ -719,6 +734,7 @@ class SlicingClassAnalysis(
             StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: java.lang.reflect.InvocationTargetException =>
+          println(s"InvocationTargetException $ex, printing Stack Trace")
           ex.printStackTrace()
           invocationTargetError.incrementAndGet()
           if (StringDecryption.logSlicing) {
@@ -982,7 +998,7 @@ class SlicingClassAnalysis(
             context
           )
         } catch {
-          case _: Throwable =>
+          case _: Throwable => println("Unhandled Exception")
         }
       }
     }
@@ -1033,17 +1049,70 @@ class SlicingClassAnalysis(
     val instance = mock(classOf[Context])
     val assetManager = mock(classOf[AssetManager])
     val applicationInfo = mock(classOf[ApplicationInfo])
+    val packageInfo = mock(classOf[PackageInfo])
+    val packageManager = mock(classOf[PackageManager])
+    val bundle = mock(classOf[Bundle])
+    val resources = mock(classOf[Resources])
+
+
+    when(bundle.getString(anyString())).thenAnswer(new Answer[Any](){
+      def answer(invocation: InvocationOnMock): Object = {
+        ""
+      }
+    })
+
+    when(bundle.getInt(anyString())).thenAnswer(new Answer[Any](){
+      def answer(invocation: InvocationOnMock): Int = {
+        1
+      }
+    })
 
     val appInfoDataDirField = applicationInfo.getClass.getDeclaredField("dataDir")
     appInfoDataDirField.setAccessible(true)
 
+    val packageInfoVersionCodeField = packageInfo.getClass.getDeclaredField("versionCode")
+    packageInfoVersionCodeField.setAccessible(true)
+
+    // metaData is only defined in PackageItemInfo, the superclass of ApplicationInfo
+    val appInfoMetaDataField = applicationInfo.getClass.getSuperclass.getDeclaredField("metaData")
+    appInfoMetaDataField.setAccessible(true)
+
     appInfoDataDirField.set(applicationInfo, apkManager.pathToDataDir)
+    packageInfoVersionCodeField.set(packageInfo, 0)
+    appInfoMetaDataField.set(applicationInfo, bundle)
+
 
     when(assetManager.open(anyString())).thenAnswer(new Answer[Any](){
       def answer(invocation: InvocationOnMock): Object = {
         val path : String = invocation.getArgument(0)
         // assuming the file is already located in the resources folder
         apkManager.getAssetStream(path)
+      }
+    })
+
+
+    when(packageManager.getPackageInfo(anyString(), anyInt())).thenAnswer(new Answer[Any](){
+      def answer(invocation: InvocationOnMock): Object = {
+        packageInfo
+      }
+    })
+
+    when(packageManager.getApplicationInfo(anyString(), anyInt())).thenAnswer(new Answer[Any]() {
+      def answer(invocation: InvocationOnMock): Object = {
+        applicationInfo
+      }
+    })
+
+    when(instance.getPackageManager).thenAnswer(new Answer[Any](){
+      def answer(invocation: InvocationOnMock): Object = {
+        packageManager
+      }
+    })
+
+    // TODO qamil: Might be worth it to think of a way to include the actual package name somehow
+    when(instance.getPackageName).thenAnswer(new Answer[Any](){
+      def answer(invocation: InvocationOnMock): Object = {
+        ""
       }
     })
 
@@ -1065,6 +1134,8 @@ class SlicingClassAnalysis(
         apkManager.cacheDirectory
       }
     })
+
+
 
     when(instance.getDir(anyString(), anyInt())).thenAnswer(new Answer[Any]() {
        def answer(invocation: InvocationOnMock) : Object = {
@@ -1090,6 +1161,14 @@ class SlicingClassAnalysis(
         applicationInfo
       }
     })
+
+    when(instance.getResources).thenAnswer(new Answer[Any]() {
+      def answer(invocation: InvocationOnMock): Object = {
+        resources
+      }
+    })
+
+
 
 
 
@@ -1628,7 +1707,7 @@ class SlicingClassAnalysis(
           th.interrupt()
           th.interrupt()
         } catch {
-          case _: Throwable =>
+          case _: Throwable => println("Unhandled THrowable")
         }
         try {
           val runnableField = th.getClass.getDeclaredField("target")
@@ -1636,7 +1715,7 @@ class SlicingClassAnalysis(
           val r = runnableField.get(th).asInstanceOf[Runnable]
           transitiveKill(r)
         } catch {
-          case _: Throwable =>
+          case _: Throwable => println("Unhandled Throwable")
         }
         th.stop()
       }
@@ -1695,9 +1774,9 @@ class SlicingClassAnalysis(
     try {
       jvmMethod.invoke(instance, params: _*)
       println("invoked reflection")
-      return logResult(resultClass, originalMethod, sinkInfo, encStringOption, context)
+      logResult(resultClass, originalMethod, sinkInfo, encStringOption, context)
     } catch {
-      case e : Throwable => println(s"Exception $e");  false
+      case e : Throwable => println(s"tryInvoke Exception $e");  false
     }
   }
 
@@ -1795,6 +1874,8 @@ class SlicingClassAnalysis(
       modifiedClassFile: ClassFile,
       project: Project[_]
   ): (Set[Method], Set[Field], Set[ClassFile]) = {
+    // qamil: Zunächst sind all die Methoden relevant, die initializer sind, UND
+    // die relevante Methoden
     var relevantMethods = cf.methods
       .filter(m =>
         m.name == "<clinit>" ||
@@ -1804,19 +1885,32 @@ class SlicingClassAnalysis(
           )
       )
       .toSet
+
+
     var toVisit = relevantMethods
     var visitedMethods = toVisit
     visitedClasses.add((cf, relevantMethod))
     var relevantFields = Set[Field]()
+
+    // qamil: Die relevanten Klassen sind zunächst die Klasse mitsamt all ihren Interfaces und Superklassen
+    // , die im Projekt vorhanden sind UND die modifizierte Klasse
     var relevantClasses =
-      Set(cf) ++ cf.interfaceTypes.flatMap[ClassFile](project.classFile(_))
+      Set(cf) ++ cf.interfaceTypes.flatMap[ClassFile](project.classFile(_)) // ++
+        // TODO: REIN EXPERIMENTELL, ZUM TESTEN OB DER BUG HIER LIEGT
+       // project.classFile(ObjectType("com/google/android/gms/common/GooglePlayServicesNotAvailableException"))
+    // ++ project.classFile(ObjectType("com/google/android/gms/common/GooglePlayServicesRepairableException"))
     cf.superclassType.foreach(
       project.classFile(_).foreach(relevantClasses += _)
     )
+
+    // TODO: Die Exception ist hier logischerweise noch nicht Teil der relevant Classes
+    //relevantClasses.filter(cf => cf.fqn.contains("GooglePlayServicesNotAvailableException")) foreach {cf => println("ClassFile Contained " + cf.fqn)}
+
     relevantClasses = relevantClasses.filter(cf =>
       (cf eq modifiedClassFile) || project.allProjectClassFiles.contains(cf)
     )
 
+    // TODO: Warum wird hier gemappt? Ist das nicht einfach eine einzelne Option?
     def lookupClassFile(
         cfOption: Option[ClassFile],
         methodOption: Option[Method] = None
@@ -1845,40 +1939,40 @@ class SlicingClassAnalysis(
     }
 
     while (toVisit.nonEmpty) {
-      val m = toVisit.head
-      visitedMethods += m
+      val methodToVisit = toVisit.head
+      visitedMethods += methodToVisit
       toVisit = toVisit.tail
-      if (m.exceptionTable.isDefined) {
-        m.exceptionTable.get.exceptions.foreach(ex =>
+      if (methodToVisit.exceptionTable.isDefined) {
+        methodToVisit.exceptionTable.get.exceptions.foreach(ex =>
           lookupClassFile(project.classFile(ex))
         )
       }
-      if (m.body.isDefined) {
-        m.body.get.exceptionHandlers.foreach(ex =>
+      if (methodToVisit.body.isDefined) {
+        methodToVisit.body.get.exceptionHandlers.foreach(ex =>
           if (ex.catchType.isDefined)
             lookupClassFile(project.classFile(ex.catchType.get))
         )
       }
-      m.descriptor.parameterTypes
-        .foreach(ty =>
-          if (ty.isObjectType)
-            lookupClassFile(project.classFile(ty.asObjectType))
-          else if (ty.isArrayType && ty.asArrayType.elementType.isObjectType)
+      methodToVisit.descriptor.parameterTypes
+        .foreach(parameterType =>
+          if (parameterType.isObjectType)
+            lookupClassFile(project.classFile(parameterType.asObjectType))
+          else if (parameterType.isArrayType && parameterType.asArrayType.elementType.isObjectType)
             lookupClassFile(
-              project.classFile(ty.asArrayType.elementType.asObjectType)
+              project.classFile(parameterType.asArrayType.elementType.asObjectType)
             )
         )
-      if (m.descriptor.returnType.isObjectType) {
-        lookupClassFile(project.classFile(m.descriptor.returnType.asObjectType))
+      if (methodToVisit.descriptor.returnType.isObjectType) {
+        lookupClassFile(project.classFile(methodToVisit.descriptor.returnType.asObjectType))
       } else if (
-        m.descriptor.returnType.isArrayType && m.descriptor.returnType.asArrayType.elementType.isObjectType
+        methodToVisit.descriptor.returnType.isArrayType && methodToVisit.descriptor.returnType.asArrayType.elementType.isObjectType
       )
         lookupClassFile(
           project.classFile(
-            m.descriptor.returnType.asArrayType.elementType.asObjectType
+            methodToVisit.descriptor.returnType.asArrayType.elementType.asObjectType
           )
         )
-      m.body.foreach(_.instructions.foreach {
+      methodToVisit.body.foreach(_.instructions.foreach {
         case FieldAccess(base, name, ty) =>
           if (ty.isObjectType)
             lookupClassFile(project.classFile(ty.asObjectType))
@@ -1890,12 +1984,15 @@ class SlicingClassAnalysis(
             })
         case MethodInvocationInstruction(base, isInterface, name, desc)
             if base.isObjectType && !isInterface =>
+          //println("MethodInvication: " + base + " " +  isInterface + " " + name + " " + desc)
           project
             .classFile(base.asObjectType)
             .foreach(targetCf => {
               val callee =
                 project.resolveMethodReference(base.asObjectType, name, desc)
+
               callee.foreach(relevantMethods += _)
+
               if (cf == targetCf) {
                 callee.foreach(m =>
                   if (!visitedMethods(m)) {
@@ -1907,6 +2004,7 @@ class SlicingClassAnalysis(
               }
             })
         case NEW(ty) =>
+          //println("NEW: " + ty.fqn)
           lookupClassFile(project.classFile(ty))
         case ANEWARRAY(ty) if ty.isObjectType =>
           lookupClassFile(project.classFile(ty.asObjectType))
@@ -1916,12 +2014,20 @@ class SlicingClassAnalysis(
           lookupClassFile(project.classFile(ty.asObjectType))
         case LDCClass(ty) if ty.isObjectType =>
           lookupClassFile(project.classFile(ty.asObjectType))
-        case _ =>
+        case e => //println(s"Another case in the method has occured: $e")
       })
     }
 
+    //Thread.sleep(10000)
+
+    val exceptions = project.allClassFiles filter {classFile => project.classHierarchy.allSupertypes(classFile.thisType, false).contains(ObjectType.Exception)}
+
+    relevantClasses ++= exceptions
+
     (relevantMethods, relevantFields, relevantClasses)
+    //(relevantMethods, relevantFields, project.allClassFiles.toSet)
   }
+
 
   def teardownAnalysis(
       t0: Long,
