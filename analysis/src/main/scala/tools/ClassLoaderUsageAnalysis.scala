@@ -12,7 +12,8 @@ import tools.AnalysisMode.{
   AnalyzeFromJAR
 }
 
-import java.io.{File, FileFilter, FileWriter}
+import java.io.{BufferedReader, File, FileFilter, FileReader, FileWriter}
+import scala.collection.mutable.ArrayBuffer
 
 /**  Analyzes apps of a given directory on whether they are using ClassLoaders.
   *
@@ -24,32 +25,17 @@ object ClassLoaderUsageAnalysis {
 
   def main(args: Array[String]): Unit = {
     val (path, analysisMode) = parseAndSetUserDefinedArgs(args)
-    val analyzeMultipleFiles = multipleFilesToAnalyze(path, analysisMode)
-
-    val pathFile = new File(path)
-
-    if (!pathFile.exists()) {
-      println(s"$path not found...")
-      outputSteam.close()
-      return
-    }
 
     println(s"Analyzing from $path...")
 
-    if (analyzeMultipleFiles) {
-      println("Multiple Files to analyze...")
-      val filesToAnalyze =
-        pathFile.listFiles(getOnlyFilesToAnalyzeFilter(analysisMode))
+    val filesToAnalyze = determineFilesToAnalyze(path, analysisMode).par
+    filesToAnalyze.foreach(analyzeAppFromFile(_, analysisMode))
 
-      filesToAnalyze.par.foreach { file =>
-        analyzeAppFromFile(file, analysisMode)
-      }
-    } else {
-      analyzeAppFromFile(pathFile, analysisMode)
-    }
+    println("Terminating analysis...")
 
     outputSteam.close()
   }
+
 
   /** Parses the given arguments and returns a Tuple of (the path to the file/directory to analyze, the desired analysis mode)
     *  with which the analysis should be performed with. Also sets the output stream to a custom output path if specified.
@@ -84,7 +70,7 @@ object ClassLoaderUsageAnalysis {
       pathOption,
       "path",
       true,
-      "The path to the given directory / file"
+      "The path to the given directory / file or a .txt file containing file paths"
     )
 
     val commandLineParser = new DefaultParser()
@@ -114,6 +100,63 @@ object ClassLoaderUsageAnalysis {
 
   }
 
+  def determineFilesToAnalyze(
+                               path: String,
+                               analysisMode: AnalysisMode
+                             ): Array[File] = {
+    val pathRefersToSingleFile = path.endsWith(".jar") || path.endsWith(".apk")
+    val pathRefersToFileContainingPaths = path.endsWith(".txt")
+
+    val pathFile = new File(path)
+    if (!pathFile.exists()) {
+      println(s"Unable to find $pathFile")
+      return Array()
+    }
+
+    if (pathRefersToSingleFile) {
+      println(s"Analyzing single file $path...")
+      Array(pathFile)
+    } else if (pathRefersToFileContainingPaths) {
+      try {
+        val files: ArrayBuffer[File] = ArrayBuffer()
+
+        val bufferedReader = new BufferedReader(new FileReader(pathFile))
+        var filePathLine: String = bufferedReader.readLine()
+
+        while (filePathLine != null) {
+          if (filePathMatchesAnalysisMode(filePathLine, analysisMode)) {
+            val file = new File(filePathLine)
+            if (file.exists()) files.append(file)
+          }
+          filePathLine = bufferedReader.readLine()
+        }
+
+        val fileCount = files.size
+        println(s"Analyzing $fileCount file(s) from specified path file...")
+
+        files.toArray
+      } catch {
+        case _: Throwable =>
+          println(s"Error while reading paths from $path"); Array()
+      }
+    } else {
+      // We now assume that the given path refers to a directory
+      println(s"Analyszing files from directory $path...")
+      pathFile.listFiles(getOnlyFilesToAnalyzeFilter(analysisMode))
+    }
+  }
+
+  def filePathMatchesAnalysisMode(
+                                   filePath: String,
+                                   analysisMode: AnalysisMode
+                                 ): Boolean = {
+    analysisMode match {
+      case AnalyzeFromJAR => filePath.endsWith(".jar")
+      case AnalyzeFromAPK => filePath.endsWith(".apk")
+      case _              => filePath.endsWith(".jar") || filePath.endsWith(".apk")
+    }
+  }
+
   def setOutputStream(customOutputPath: Option[String]): Unit = {
     if (customOutputPath.isEmpty) {
       outputSteam = new FileWriter(getStandardOutputFile, false)
@@ -121,17 +164,6 @@ object ClassLoaderUsageAnalysis {
       val outputPathFile = new File(customOutputPath.get)
       if (!outputPathFile.exists()) outputPathFile.createNewFile()
       outputSteam = new FileWriter(outputPathFile, false)
-    }
-  }
-
-  def multipleFilesToAnalyze(
-      path: String,
-      analysisMode: AnalysisMode
-  ): Boolean = {
-    analysisMode match {
-      case AnalyzeFromJAR => !path.endsWith(".jar")
-      case AnalyzeFromAPK => !path.endsWith(".apk")
-      case AnalyzeFromAny => !path.endsWith(".jar") && !path.endsWith(".apk")
     }
   }
 
@@ -207,5 +239,4 @@ object ClassLoaderUsageAnalysis {
 object AnalysisMode extends Enumeration {
   type AnalysisMode = Value
   val AnalyzeFromJAR, AnalyzeFromAPK, AnalyzeFromAny = Value
-
 }

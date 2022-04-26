@@ -27,7 +27,9 @@ The arguments are as following (the order of arguments are not important):
 ```
 You can either analyze a single file or multiple files at once. If you want to analyze
 a batch of files within a directory, you can simply specify the directory containing
-the files. All top-level entires will be considered
+the files. All top-level entires will be considered. You can also specify the path a
+*.txt* file containing all paths to files you want to analyze. The paths contained in 
+this file must be seperated by line breaks.
 
 If you only want either *.jar* or *.apk* file(s) to be considered for the analysis, you
 can specify that by setting **either** the *-jar* **or** the *-apk* flag. By default, all
@@ -48,5 +50,10 @@ To analyze a single .jar file I specify:
 To analyze multiple jar-only files from a directory and log the result on my Desktop I specify:
 ```
 -p /Users/me/Documents/My_Files_To_Analyze/ -jar -o /Users/me/Desktop/results.txt
+```
+
+To analyze multiple apk-only files from a bunch of files listed in a .txt file I specify:
+```
+-p /Users/me/Documents/paths.txt -apk
 ```
 
