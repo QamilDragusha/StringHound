@@ -36,37 +36,47 @@ class ClassLoaderFinder(project: Project[URL]) {
     standardClassLoaderTypes ++ customClassLoaderTypes
   }
 
-  def findClassLoaderInstantiations() : mutable.HashMap[Method, Array[Int]] = {
-    val foundInstatiations : mutable.HashMap[Method, Array[Int]] = mutable.HashMap()
-    project.allMethodsWithBody foreach {
-       method =>
-         {
-           val classLoaderInstantiationInstructions = findClassLoaderInstantiationInstructions(method)
-           if (!classLoaderInstantiationInstructions.isEmpty){
-             foundInstatiations += (method -> classLoaderInstantiationInstructions)
-           }
-         }
+  private var instantiatedClassLoaderTypes: Set[ObjectType] = Set()
+
+  def findClassLoaderInstantiationsAndVariety()
+      : (mutable.HashMap[Method, Array[Int]], Set[ObjectType]) = {
+    instantiatedClassLoaderTypes = Set()
+    (findClassLoaderInstantiations(logVariety = true), instantiatedClassLoaderTypes)
+  }
+
+
+  def findClassLoaderInstantiations(
+      logVariety: Boolean = false
+  ): mutable.HashMap[Method, Array[Int]] = {
+    val foundInstatiations: mutable.HashMap[Method, Array[Int]] =
+      mutable.HashMap()
+    project.allMethodsWithBody foreach { method =>
+      {
+        val classLoaderInstantiationInstructions =
+          findClassLoaderInstantiationInstructions(method, logVariety)
+        if (!classLoaderInstantiationInstructions.isEmpty) {
+          foundInstatiations += (method -> classLoaderInstantiationInstructions)
+        }
+      }
 
     }
     //foundInstatiations foreach println
     foundInstatiations
   }
 
-  def findClassLoaderUsages() : mutable.HashMap[Method, Array[Int]] = {
-    val foundUsages : mutable.HashMap[Method, Array[Int]] = mutable.HashMap()
-    project.allMethodsWithBody foreach {
-      method =>
-        {
-          val classLoaderUsageInstructions = findClassLoadingInstructions(method)
-          if(!classLoaderUsageInstructions.isEmpty) {
-            foundUsages += (method -> findClassLoadingInstructions(method))
-          }
-
+  def findClassLoaderUsages(): mutable.HashMap[Method, Array[Int]] = {
+    val foundUsages: mutable.HashMap[Method, Array[Int]] = mutable.HashMap()
+    project.allMethodsWithBody foreach { method =>
+      {
+        val classLoaderUsageInstructions = findClassLoadingInstructions(method)
+        if (!classLoaderUsageInstructions.isEmpty) {
+          foundUsages += (method -> findClassLoadingInstructions(method))
         }
+
+      }
     }
     foundUsages
   }
-
 
   private def classFileInheritsClassLoader(classFile: ClassFile): Boolean = {
     val superClasses = project.classHierarchy
@@ -75,12 +85,19 @@ class ClassLoaderFinder(project: Project[URL]) {
     superClasses.exists(standardClassLoaderTypes.contains)
   }
 
-  private def findClassLoaderInstantiationInstructions(method: Method)(implicit
+  private def findClassLoaderInstantiationInstructions(
+      method: Method,
+      logVariety: Boolean
+  )(implicit
       projectWideClassLoaderTypes: ConstArray[ObjectType]
   ): Array[Int] = {
     val methodBody = method.body.get
     val invocationLocations = methodBody filter { (_, instruction) =>
-      instructionInvokesClassLoaderMethodWithName(instruction, "<init>")
+      instructionInvokesClassLoaderMethodWithName(
+        instruction,
+        "<init>",
+        logVariety
+      )
     }
 
     invocationLocations.toArray
@@ -91,7 +108,7 @@ class ClassLoaderFinder(project: Project[URL]) {
   ): Array[Int] = {
     val methodBody = method.body.get
     val loadClassLocations = methodBody filter { (_, instruction) =>
-      instructionInvokesClassLoaderMethodWithName(instruction, "loadClass")
+      instructionInvokesClassLoaderMethodWithName(instruction, "loadClass", false)
     }
 
     loadClassLocations.toArray
@@ -101,13 +118,18 @@ class ClassLoaderFinder(project: Project[URL]) {
   private def instructionInvokesClassLoaderMethodWithName(
       instruction: Instruction,
       methodName: String,
+      logVariety: Boolean
   )(implicit projectWideClassLoaderTypes: ConstArray[ObjectType]): Boolean = {
     instruction match {
       case INVOKESPECIAL(declaringClass, _, name, _) => {
         if (
           projectWideClassLoaderTypes
             .contains(declaringClass) && name.equals(methodName)
-        ) { return true }
+        ) {
+          if (logVariety)
+            instantiatedClassLoaderTypes ++= Set(declaringClass.asObjectType)
+          return true
+        }
         false
       }
       case INVOKEVIRTUAL(declaringClass, name, _) => {
@@ -120,8 +142,5 @@ class ClassLoaderFinder(project: Project[URL]) {
       case _ => false
     }
   }
-
-
-
 
 }
