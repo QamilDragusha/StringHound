@@ -4,18 +4,74 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Added getFilesDir to mocked Context">
-      <change afterPath="$PROJECT_DIR$/src/main/scala/helper/androidMocks/MockedApplicationInfo.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/scala/helper/androidMocks/MockedScalaApplicationInfo.scala" afterDir="false" />
+    <list default="true" id="3a808de7-fc18-4fca-9046-718cc4ec6ded" name="Default Changelist" comment="Made OPAL less verbose on ClassLoaderUsageAnalysis">
+      <change afterPath="$PROJECT_DIR$/jars/AngryBirdsPop.apk.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/build.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/scala-2.12/sbt-1.0/update/update_cache_2.12/inputs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/_global/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/csrConfiguration/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/csrProject/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/dependencyPositions/_global/streams/update_cache_2.12/input_dsp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/ivyConfiguration/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/ivySbt/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/moduleSettings/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/projectDescriptors/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/scalaCompilerBridgeScope/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/_global/update/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/_global/_global/discoveredMainClasses/data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/bspReporter/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/compile/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/compileIncremental/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/copyResources/_global/streams/copy-resources" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/copyResources/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/incOptions/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/internalDependencyClasspath/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/scalacOptions/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/compile/unmanagedClasspath/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/runtime/internalDependencyClasspath/_global/streams/out" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/python/enjarify-master/project/target/streams/runtime/unmanagedClasspath/_global/streams/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/sbt__org_scala_lang_scala_library_2_12_8_jar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/sbt__org_scala_lang_scala_library_2_12_8_jar.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules/deobfuscator-build.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/deobfuscator-build.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules/deobfuscator.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/deobfuscator.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sbt.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sbt.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/default/analysis-build/scala_2.12/sbt_1.0/0.1.0-SNAPSHOT/resolved.xml.properties" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/default/analysis-build/scala_2.12/sbt_1.0/0.1.0-SNAPSHOT/resolved.xml.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/default/analysis-build/scala_2.12/sbt_1.0/0.1.0-SNAPSHOT/resolved.xml.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/default/analysis-build/scala_2.12/sbt_1.0/0.1.0-SNAPSHOT/resolved.xml.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-compile-internal.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-compile-internal.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-compile.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-compile.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-optional.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-optional.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-plugin.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-plugin.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-provided.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-provided.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-runtime-internal.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-runtime-internal.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-runtime.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-runtime.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-scala-tool.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-scala-tool.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-test-internal.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-test-internal.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-test.xml" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/scala-2.12/sbt-1.0/resolution-cache/reports/default-analysis-build-test.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/$global/dependencyPositions/$global/streams/update_cache_2.12/output_dsp" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/$global/dependencyPositions/$global/streams/update_cache_2.12/output_dsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/$global/update/$global/streams/out" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/$global/update/$global/streams/update_cache_2.12/output" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/$global/update/$global/streams/update_cache_2.12/output" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/$global/streams/out" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/compileIncremental/$global/streams/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/dependencyClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/dependencyClasspath/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/exportedProducts/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/exportedProducts/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/externalDependencyClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/externalDependencyClasspath/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/compile/managedClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/compile/managedClasspath/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/dependencyClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/dependencyClasspath/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/exportedProducts/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/exportedProducts/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/externalDependencyClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/externalDependencyClasspath/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/fullClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/fullClasspath/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/internalDependencyClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/internalDependencyClasspath/$global/streams/export" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/target/streams/runtime/managedClasspath/$global/streams/export" beforeDir="false" afterPath="$PROJECT_DIR$/project/target/streams/runtime/managedClasspath/$global/streams/export" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/helper/APKManager.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/helper/APKManager.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/helper/ClassLoaderFinder.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/helper/ClassLoaderFinder.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="ChangesViewManager" show_ignored="true" />
   <component name="CodeStyleSettingsInfer">
     <option name="done" value="true" />
   </component>
@@ -62,15 +118,19 @@
     </findStrings>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$/.." value="master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.8-sources.jar!/scala/Predef.scala" root0="SKIP_INSPECTION" />
-    <setting file="jar://$USER_HOME$/Library/Java/JavaVirtualMachines/corretto-1.8.0_292/Contents/Home/src.zip!/java/lang/reflect/Method.java" root0="SKIP_INSPECTION" />
-    <setting file="jar://$PROJECT_DIR$/lib/bytecode-representation_2.12.jar!/org/opalj/br/instructions/LoadString.class" root0="SKIP_INSPECTION" />
     <setting file="jar://$PROJECT_DIR$/lib/abstract-interpretation-framework_2.12.jar!/org/opalj/ai/AIResult.class" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/lib/bytecode-representation_2.12.jar!/org/opalj/br/instructions/LoadString.class" root0="SKIP_INSPECTION" />
     <setting file="jar://$PROJECT_DIR$/lib/bytecode-representation_2.12.jar!/org/opalj/br/package.class" root0="SKIP_INSPECTION" />
-    <setting file="jar://$USER_HOME$/Library/Java/JavaVirtualMachines/corretto-1.8.0_292/Contents/Home/src.zip!/java/lang/Class.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/lib/common_2.12-sources.jar!/org/opalj/graphs/viz-lite.js" root0="SKIP_INSPECTION" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -87,8 +147,11 @@
       </list>
     </option>
   </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
   <component name="ProjectCodeStyleSettingsMigration">
-    <option name="version" value="1" />
+    <option name="version" value="2" />
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-7" />
@@ -168,20 +231,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/resources" />
-    <property name="nodejs_package_manager_path" value="npm" />
-    <property name="project.structure.last.edited" value="Modules" />
-    <property name="project.structure.proportion" value="0.15" />
-    <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
-    <property name="two.files.diff.last.used.file" value="$PROJECT_DIR$/src/main/scala/helper/APKTransformer.scala" />
-  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/qamil/IdeaProjects/StringHound/analysis/jars&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  }
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/jars" />
+      <recent name="$PROJECT_DIR$/src/main" />
       <recent name="$PROJECT_DIR$/resources" />
       <recent name="C:\Users\glanz\git\StringHound\analysis" />
     </key>
@@ -189,12 +255,20 @@
       <recent name="$PROJECT_DIR$/resources" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ClassStringDecryption">
+  <component name="RunManager" selected="Application.ClassLoaderUsageAnalysis">
     <configuration name="ClassDecryption" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
       <option name="MAIN_CLASS_NAME" value="main.ClassDecryption" />
       <module name="deobfuscator" />
       <option name="PROGRAM_PARAMETERS" value="-f $USER_HOME$/Documents/ClassHound/AppAnalysis/JARs/complete/AngryBirdsPop-enjarify.jar" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ClassLoaderUsageAnalysis" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="tools.ClassLoaderUsageAnalysis" />
+      <module name="deobfuscator" />
+      <option name="PROGRAM_PARAMETERS" value="-p $USER_HOME$/Documents/ClassHound/paths.txt -o $USER_HOME$/Documents/ClassHound/test.txt" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -206,6 +280,7 @@
       <option name="MAIN_CLASS_NAME" value="main.StringDecryption" />
       <module name="deobfuscator" />
       <option name="PROGRAM_PARAMETERS" value="-s -f $USER_HOME$/Documents/ClassHound/AppAnalysis/APKs/AngryBirdsPop.apk -cl" />
+      <option name="VM_PARAMETERS" value="-Xmx5g -Xms1g" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -223,6 +298,7 @@
       <item itemvalue="Application.ClassDecryption" />
       <item itemvalue="Application.StringDecryption" />
       <item itemvalue="Application.ClassStringDecryption" />
+      <item itemvalue="Application.ClassLoaderUsageAnalysis" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -260,6 +336,7 @@
       <workItem from="1649187252560" duration="23167000" />
       <workItem from="1649346130330" duration="39174000" />
       <workItem from="1649783187386" duration="980000" />
+      <workItem from="1650746805096" duration="37121000" />
     </task>
     <task id="LOCAL-00001" summary="Added apk_analyzer into project">
       <created>1642764854337</created>
@@ -408,7 +485,105 @@
       <option name="project" value="LOCAL" />
       <updated>1649669554262</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Mocked more context parts such as the bundle">
+      <created>1650744101703</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1650744101703</updated>
+    </task>
+    <task id="LOCAL-00023" summary="Mocked more context parts such as the bundle">
+      <created>1650744838597</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1650744838597</updated>
+    </task>
+    <task id="LOCAL-00024" summary="Added /jars/ to gitignore">
+      <created>1650746211498</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1650746211498</updated>
+    </task>
+    <task id="LOCAL-00025" summary="Updated enjarify">
+      <created>1650746385847</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1650746385847</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Added target folder to gitignore">
+      <created>1650746707067</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1650746707067</updated>
+    </task>
+    <task id="LOCAL-00027" summary="Refactored android library mocking into AndroidLibraryMocker">
+      <created>1650746974133</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1650746974133</updated>
+    </task>
+    <task id="LOCAL-00028" summary="enjarify">
+      <created>1650746993527</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1650746993527</updated>
+    </task>
+    <task id="LOCAL-00029" summary="removed MockedApplicationInfo.java">
+      <created>1650747037102</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1650747037102</updated>
+    </task>
+    <task id="LOCAL-00030" summary="Adapted gitignore">
+      <created>1650747145137</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1650747145137</updated>
+    </task>
+    <task id="LOCAL-00031" summary="Now able to read meta-data integers from the application bundle">
+      <created>1650755626236</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1650755626236</updated>
+    </task>
+    <task id="LOCAL-00032" summary="Added ClassLoaderUsageAnalysis">
+      <created>1650916897414</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1650916897414</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Enhanced ClassLoaderUsageAnalysis and added Documentation">
+      <created>1650968545517</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1650968545517</updated>
+    </task>
+    <task id="LOCAL-00034" summary="ClassLoaderUsageAnalysis can now read path files">
+      <created>1650970736717</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1650970736717</updated>
+    </task>
+    <task id="LOCAL-00035" summary="Made OPAL less verbose on ClassLoaderUsageAnalysis">
+      <created>1650971061541</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1650971061541</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -459,18 +634,8 @@
         </entry>
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Added apk_analyzer into project" />
-    <MESSAGE value="Refactored ClassLoaderFinder and fixed DexClassLoaderAnalysis" />
-    <MESSAGE value="Implementing SlicingClassAnalysis" />
-    <MESSAGE value="Refactored and optimized ClassLoaderFinder" />
-    <MESSAGE value="ClassLoaderFinder now also finds class loadings" />
-    <MESSAGE value="Refactored ClassSlicingAnalysis to only analyze relevant instructions" />
-    <MESSAGE value="Implemented HashExtension and small code changes" />
-    <MESSAGE value="Created / Extracted first BRClasses" />
-    <MESSAGE value="Added custom library BR Classes" />
     <MESSAGE value="Reverted changes blocking usual string leaking and implemented additional Library Mocks" />
     <MESSAGE value="Mocked Context and AssetManager, now able to successfully leak ByteBuffers" />
     <MESSAGE value="Extracted DummyClass out of SlicingClassAnalysis" />
@@ -483,7 +648,58 @@
     <MESSAGE value="Refactored Leaker to do general purpose leaking" />
     <MESSAGE value="Fixed leaking of dexfiles in Leaker" />
     <MESSAGE value="Added getFilesDir to mocked Context" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added getFilesDir to mocked Context" />
+    <MESSAGE value="Mocked more context parts such as the bundle" />
+    <MESSAGE value="Added /jars/ to gitignore" />
+    <MESSAGE value="Updated enjarify" />
+    <MESSAGE value="Added target folder to gitignore" />
+    <MESSAGE value="Refactored android library mocking into AndroidLibraryMocker" />
+    <MESSAGE value="enjarify" />
+    <MESSAGE value="removed MockedApplicationInfo.java" />
+    <MESSAGE value="Adapted gitignore" />
+    <MESSAGE value="Now able to read meta-data integers from the application bundle" />
+    <MESSAGE value="Added ClassLoaderUsageAnalysis" />
+    <MESSAGE value="Enhanced ClassLoaderUsageAnalysis and added Documentation" />
+    <MESSAGE value="ClassLoaderUsageAnalysis can now read path files" />
+    <MESSAGE value="Made OPAL less verbose on ClassLoaderUsageAnalysis" />
+    <option name="LAST_COMMIT_MESSAGE" value="Made OPAL less verbose on ClassLoaderUsageAnalysis" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="scala-line">
+          <url>file://$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala</url>
+          <line>1651</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="scala-line">
+          <url>file://$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala</url>
+          <line>761</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="scala-line">
+          <url>file://$PROJECT_DIR$/src/main/scala/analyses/SlicingClassAnalysis.scala</url>
+          <line>764</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+        <breakpoint type="java-wildcard-method">
+          <properties class="*" method="print">
+            <option name="EMULATED" value="true" />
+            <option name="WATCH_EXIT" value="false" />
+          </properties>
+          <option name="timeStamp" value="3" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <pin-to-top-manager>
+      <pinned-members>
+        <PinnedItemInfo parentTag="java.lang.NoClassDefFoundError" memberName="detailMessage" />
+      </pinned-members>
+    </pin-to-top-manager>
+    <watches-manager>
+      <configuration name="Application">
+        <watch expression="((InvocationTargetException)e).target" custom="java.lang.reflect.InvocationTargetException" />
+      </configuration>
+    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

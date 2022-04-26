@@ -683,7 +683,7 @@ class SlicingClassAnalysis(
             urls // qamil: URLs seem to be empty most of the time
           )
 
-          strippedClasses
+           strippedClasses
             .filter(c =>
               c.fqn != methodClassFile.fqn && c.fqn != "slicing.StringLeaker" && c.fqn != "slicing.ByteBufferLeaker"
             //&& c.fqn != "android.content.Context" && c.fqn != "android/content/Context"
@@ -759,6 +759,8 @@ class SlicingClassAnalysis(
             StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
           }
 
+          //androidx/coordinator
+        // qamil BREAKPOINT
         case ex: java.lang.NoClassDefFoundError =>
           println(
             "Exception " + ex
@@ -805,8 +807,10 @@ class SlicingClassAnalysis(
     runner.start()
     if (debug)
       runner.join()
-    else
-      runner.join(5000)
+    else {
+      // TOODO : qamil: Nur zu Debugging-Zwecken
+      runner.join(20000)
+    }
     if (runner.isAlive) {
       try {
         classOf[Thread].getMethod("stop").invoke(runner)
@@ -1889,9 +1893,56 @@ class SlicingClassAnalysis(
 
     //Thread.sleep(10000)
 
-    val exceptions = project.allClassFiles filter {classFile => project.classHierarchy.allSupertypes(classFile.thisType, false).contains(ObjectType.Exception)}
+     val exceptions = project.allClassFiles filter {classFile => project.classHierarchy.allSupertypes(classFile.thisType, false).contains(ObjectType.Exception)}
 
+    // TODO: QAMIL: Debug: Nur zum Testen
     relevantClasses ++= exceptions
+
+    /*
+    val nonLibClasses = project.allProjectClassFiles.filter(projClassFile => !projClassFile.fqn.startsWith("android"))
+    relevantClasses ++= nonLibClasses
+
+    relevantClasses = relevantClasses.filter(classFile => !classFile.fqn.startsWith("android"))
+    */
+
+    //relevantClasses = project.allProjectClassFiles.filter(cf => !libraryClasses.contains(cf) && !cf.fqn.contains("android")).toSet
+
+
+
+    // lookupClassFile(project.classFile(ObjectType("com/google/android/gms/commmon/zzw")))
+
+    //relevantClasses foreach{classFile => println("relevant ClassFile: " + classFile.fqn)}
+
+    //val zzw = project.classFile(ObjectType("com/google/android/gms/common/zzw"))
+    //val zze = project.classFile(ObjectType("com/google/android/gms/common/zze"))
+
+    //println(s"zzw : $zzw, zze : $zze")
+
+    //relevantClasses = project.allProjectClassFiles.filter(classFile => !libraryClasses.contains(classFile)).toSet
+    //relevantClasses foreach{classFile => println("relevant ClassFile: " + classFile.fqn)}
+
+    val classesToLoad = ConstArray(
+      "com/google/android/gms/common/zzw",
+      "com/google/android/gms/common/zzn",
+      "com/google/android/gms/common/internal/zzae"
+    ).map {ObjectType(_)}
+
+    //val additionalClasses = classesToLoad.map{objectType => project.classFile(objectType).get}.toSet
+    val googleLib = project.allProjectClassFiles.filter(classFile => classFile.fqn.startsWith("com/google/")).toSet
+
+    // googleLib foreach(classFile => println("googleLibClassFile: " + classFile.fqn))
+
+    //relevantClasses ++= additionalClasses
+    relevantClasses ++= googleLib
+
+
+    relevantClasses = relevantClasses.filter(classFile => !classFile.fqn.startsWith("android"))
+
+    relevantClasses foreach(classFile => println("relevantClassFile: " + classFile.fqn))
+
+    relevantMethods map(method => method.classFile.fqn) foreach(fqn => println(s"method from $fqn"))
+
+    relevantFields map(field => field.classFile.fqn) foreach(fqn => println(s"relevant field from $fqn"))
 
     (relevantMethods, relevantFields, relevantClasses)
     //(relevantMethods, relevantFields, project.allClassFiles.toSet)
