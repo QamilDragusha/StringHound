@@ -2,17 +2,14 @@ package tools
 
 import helper.{APKManager, AndroidJarAnalysis, ClassLoaderFinder}
 import main.StringDecryption
-import main.StringDecryption.{outputDir, stdLib}
+import main.StringDecryption.{ErrorLogger, outputDir, stdLib}
 import org.apache.commons.cli.{DefaultParser, Options}
 import org.opalj.br.analyses.Project
-import tools.AnalysisMode.{
-  AnalysisMode,
-  AnalyzeFromAPK,
-  AnalyzeFromAny,
-  AnalyzeFromJAR
-}
+import org.opalj.log.{GlobalLogContext, OPALLogger}
+import tools.AnalysisMode.{AnalysisMode, AnalyzeFromAPK, AnalyzeFromAny, AnalyzeFromJAR}
 
 import java.io.{BufferedReader, File, FileFilter, FileReader, FileWriter}
+import java.net.URL
 import scala.collection.mutable.ArrayBuffer
 
 /**  Analyzes apps of a given directory on whether they are using ClassLoaders.
@@ -24,6 +21,7 @@ object ClassLoaderUsageAnalysis {
   private var outputSteam: FileWriter = _
 
   def main(args: Array[String]): Unit = {
+    OPALLogger.updateLogger(GlobalLogContext, ErrorLogger)
     val (path, analysisMode) = parseAndSetUserDefinedArgs(args)
 
     println(s"Analyzing from $path...")
@@ -168,6 +166,7 @@ object ClassLoaderUsageAnalysis {
   }
 
   def analyzeAppFromFile(appFile: File, analysisMode: AnalysisMode): Unit = {
+    println("Analyzing " + appFile.getPath)
     analysisMode match {
       case AnalyzeFromJAR => analyzeJAR(appFile)
       case AnalyzeFromAPK => analyzeAPK(appFile)
@@ -182,7 +181,7 @@ object ClassLoaderUsageAnalysis {
     val jarName = jarFile.getAbsolutePath.split("/").last
 
     val androidLib = new File(AndroidJarAnalysis.identifyAndroidJar(jarFile))
-    val project = Project(Array(jarFile), Array(stdLib, androidLib))
+    val project : Project[URL] = Project(Array(jarFile), Array(stdLib, androidLib))
 
     val (classLoaderInstantiations, instantiatedClassLoaderTypes) =
       new ClassLoaderFinder(project).findClassLoaderInstantiationsAndVariety()
