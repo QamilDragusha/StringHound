@@ -4,14 +4,20 @@ The following tools will be explained and documented below
 
 ## ClassLoaderUsageAnalysis
 
-A simple tool for quickly checking how many class loaders are being 
-instantiated and how many different class loaders are being used in a given app 
-or given apps.
+A simple tool for quickly analyzing how many and which class loaders are being 
+instantiated in a given app or given apps.
 
-Analysis results will be written in a file as following (_only Apps with detected 
-instantations will be listed_)
-> *first_app_to_instantiate_classLoaders* : 7 instantiations of 5 different types
-> *second_app_to_instantiate_classLoaders* : 9 instantiations of 4 different types
+Analysis results will be returned in form of a *.csv* table that lists the results as 
+following:
+
+| Sum                      | 8   |
+|--------------------------|-----| 
+| com.example.ClassLoader1 | 6   |
+| com.example.ClassLoader2 | 1 |
+| ... | ...|
+
+> The first row holds the total amound of class loader instances found while any other
+> row holds a class loader type found as well as it's found instances
 
 ### Requirements
 
@@ -23,22 +29,35 @@ accessible via the *pypy3* command.
 
 The arguments are as following (the order of arguments are not important):
 ```
-(-apk/-jar) -p <path_to_the_directory/file> (-o <path_to_results_file>)
+-p <path_to_the_directory/file> (-apk/-jar) (-o <path_to_results_file>) (-v)
 ```
+
+###### Path
 You can either analyze a single file or multiple files at once. If you want to analyze
 a batch of files within a directory, you can simply specify the directory containing
-the files. All top-level entires will be considered. You can also specify the path a
+the files. All top-level entires will be considered. You can also specify the path of a
 *.txt* file containing all paths to files you want to analyze. The paths contained in 
 this file must be seperated by line breaks.
 
+###### APK/JAR Filter
 If you only want either *.jar* or *.apk* file(s) to be considered for the analysis, you
 can specify that by setting **either** the *-jar* **or** the *-apk* flag. By default, all
 jar/apk files in a directory or a file directly specified will be considered. Using jar files
 is considerably faster as APKs have to be repackaged first.
 
-By default, the results will be documented in a *classLoaderAnalysis/results.txt* file
-which will be created in the project folder. If you wish to specify a custom output file,
-that can be done using the optional *-o* argument.
+###### Output Directory
+By default, the results will be documented in a *classLoaderAnalysis* directory
+which will be created in the project folder. If you wish to specify a custom output directory,
+that can be done using the optional *-o* argument. **Each app** analyzed will result in an *.csv* 
+formatted conclusion named analogous to the app.
+
+*Naming Example:*
+> The app to be analzed is named *fancy_app_analyze_me.jar*. This will yield a result-file named
+> *fancy_app_analyze_me.jar.csv* in the ouput specified (if any) 
+
+###### Logging
+As console logging is expensive (especially on parallelized systems) most logging outputs will 
+be omitted if not specifically set otherwise via the *-v* / *-verbose* flag.
 
 #### Examples
 

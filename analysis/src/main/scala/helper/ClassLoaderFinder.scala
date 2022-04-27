@@ -36,12 +36,16 @@ class ClassLoaderFinder(project: Project[URL]) {
     standardClassLoaderTypes ++ customClassLoaderTypes
   }
 
-  private var instantiatedClassLoaderTypes: Set[ObjectType] = Set()
+  // will only be used if [logVariety] is set with findClassLoaderInstantiations()
+  private var classLoaderTypesAndInstanceAmount: mutable.LinkedHashMap[ObjectType, Int] = mutable.LinkedHashMap()
+  private var absoluteSumOfClassLoaderInstances: Int = _
 
-  def findClassLoaderInstantiationsAndVariety()
-      : (mutable.HashMap[Method, Array[Int]], Set[ObjectType]) = {
-    instantiatedClassLoaderTypes = Set()
-    (findClassLoaderInstantiations(logVariety = true), instantiatedClassLoaderTypes)
+  def computeClassLoaderVariety()
+      :  (mutable.LinkedHashMap[ObjectType, Int], Int) = {
+    classLoaderTypesAndInstanceAmount = mutable.LinkedHashMap()
+    absoluteSumOfClassLoaderInstances = 0
+    findClassLoaderInstantiations(logVariety = true)
+    (classLoaderTypesAndInstanceAmount, absoluteSumOfClassLoaderInstances)
   }
 
 
@@ -127,7 +131,7 @@ class ClassLoaderFinder(project: Project[URL]) {
             .contains(declaringClass) && name.equals(methodName)
         ) {
           if (logVariety)
-            instantiatedClassLoaderTypes ++= Set(declaringClass.asObjectType)
+            logClassLoaderInstance(declaringClass)
           return true
         }
         false
@@ -141,6 +145,12 @@ class ClassLoaderFinder(project: Project[URL]) {
       }
       case _ => false
     }
+  }
+
+  private def logClassLoaderInstance(classLoaderType: ObjectType) : Unit = {
+    val instanceAmount = classLoaderTypesAndInstanceAmount.getOrElseUpdate(classLoaderType, 0)
+    classLoaderTypesAndInstanceAmount.update(classLoaderType, instanceAmount + 1)
+    absoluteSumOfClassLoaderInstances += 1
   }
 
 }

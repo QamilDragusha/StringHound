@@ -13,8 +13,10 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-lang3" % "3.7",
   "net.sf.extjwnl" % "extjwnl" % "1.9.4",
   "net.sf.extjwnl" % "extjwnl-data-wn31" % "1.2",
-  "org.mockito" % "mockito-inline" % "4.4.0"
-  //"org.mockito" % "mockito-core" % "4.4.0"
+  // required for e.g. mocking contexts etc.
+  "org.mockito" % "mockito-inline" % "4.4.0",
+  // required for writing class loader usage results to a .csv
+  "com.github.tototoshi" %% "scala-csv" % "1.3.10"
 )
 unmanagedClasspath in Runtime += baseDirectory.value / "resources"
 

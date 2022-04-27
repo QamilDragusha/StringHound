@@ -1,15 +1,23 @@
 package tools
 
+import com.github.tototoshi.csv.CSVWriter
 import helper.{APKManager, AndroidJarAnalysis, ClassLoaderFinder}
 import main.StringDecryption
 import main.StringDecryption.{ErrorLogger, outputDir, stdLib}
 import org.apache.commons.cli.{DefaultParser, Options}
+import org.opalj.br.ObjectType
 import org.opalj.br.analyses.Project
 import org.opalj.log.{GlobalLogContext, OPALLogger}
-import tools.AnalysisMode.{AnalysisMode, AnalyzeFromAPK, AnalyzeFromAny, AnalyzeFromJAR}
+import tools.AnalysisMode.{
+  AnalysisMode,
+  AnalyzeFromAPK,
+  AnalyzeFromAny,
+  AnalyzeFromJAR
+}
 
 import java.io.{BufferedReader, File, FileFilter, FileReader, FileWriter}
 import java.net.URL
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**  Analyzes apps of a given directory on whether they are using ClassLoaders.
@@ -18,7 +26,10 @@ import scala.collection.mutable.ArrayBuffer
   */
 object ClassLoaderUsageAnalysis {
 
-  private var outputSteam: FileWriter = _
+  private var outputDirectory: File = _
+  private var verbose = false
+
+  private lazy val outputDirectoryPath: String = outputDirectory.getPath
 
   def main(args: Array[String]): Unit = {
     OPALLogger.updateLogger(GlobalLogContext, ErrorLogger)
@@ -31,14 +42,12 @@ object ClassLoaderUsageAnalysis {
 
     println("Terminating analysis...")
 
-    outputSteam.close()
   }
-
 
   /** Parses the given arguments and returns a Tuple of (the path to the file/directory to analyze, the desired analysis mode)
     *  with which the analysis should be performed with. Also sets the output stream to a custom output path if specified.
     */
-  def parseAndSetUserDefinedArgs(
+  private def parseAndSetUserDefinedArgs(
       args: Array[String]
   ): (String, AnalysisMode) = {
 
@@ -46,6 +55,7 @@ object ClassLoaderUsageAnalysis {
     val apkOption = "apk"
     val pathOption = "p"
     val outputOption = "o"
+    val verboseOption = "v"
 
     val options = new Options()
     options.addOption(
@@ -70,6 +80,12 @@ object ClassLoaderUsageAnalysis {
       true,
       "The path to the given directory / file or a .txt file containing file paths"
     )
+    options.addOption(
+      verboseOption,
+      "verbose",
+      false,
+      "Setting this flag will yield more verbose outputs"
+    )
 
     val commandLineParser = new DefaultParser()
     val commandLine = commandLineParser.parse(options, args)
@@ -81,12 +97,14 @@ object ClassLoaderUsageAnalysis {
         Some(commandLine.getOptionValue(outputOption))
       else None
 
-    setOutputStream(customOutputPath)
+    setOutputDirectory(customOutputPath)
 
     assert(
       !commandLine.hasOption(jarOption) || !commandLine.hasOption(apkOption),
       "Setting both -jar and -apk ignores every file"
     )
+
+    if (commandLine.hasOption(verboseOption)) verbose = true
 
     if (commandLine.hasOption(jarOption)) {
       (path, AnalysisMode.AnalyzeFromJAR)
@@ -98,10 +116,10 @@ object ClassLoaderUsageAnalysis {
 
   }
 
-  def determineFilesToAnalyze(
-                               path: String,
-                               analysisMode: AnalysisMode
-                             ): Array[File] = {
+  private def determineFilesToAnalyze(
+      path: String,
+      analysisMode: AnalysisMode
+  ): Array[File] = {
     val pathRefersToSingleFile = path.endsWith(".jar") || path.endsWith(".apk")
     val pathRefersToFileContainingPaths = path.endsWith(".txt")
 
@@ -144,10 +162,10 @@ object ClassLoaderUsageAnalysis {
     }
   }
 
-  def filePathMatchesAnalysisMode(
-                                   filePath: String,
-                                   analysisMode: AnalysisMode
-                                 ): Boolean = {
+  private def filePathMatchesAnalysisMode(
+      filePath: String,
+      analysisMode: AnalysisMode
+  ): Boolean = {
     analysisMode match {
       case AnalyzeFromJAR => filePath.endsWith(".jar")
       case AnalyzeFromAPK => filePath.endsWith(".apk")
@@ -155,18 +173,22 @@ object ClassLoaderUsageAnalysis {
     }
   }
 
-  def setOutputStream(customOutputPath: Option[String]): Unit = {
+  private def setOutputDirectory(customOutputPath: Option[String]): Unit = {
     if (customOutputPath.isEmpty) {
-      outputSteam = new FileWriter(getStandardOutputFile, false)
+      outputDirectory = getStandardOutputDirectory
     } else {
       val outputPathFile = new File(customOutputPath.get)
-      if (!outputPathFile.exists()) outputPathFile.createNewFile()
-      outputSteam = new FileWriter(outputPathFile, false)
+      if (!outputPathFile.exists()) outputPathFile.mkdir()
+      outputDirectory = outputPathFile
     }
   }
 
-  def analyzeAppFromFile(appFile: File, analysisMode: AnalysisMode): Unit = {
-    println("Analyzing " + appFile.getPath)
+  private def analyzeAppFromFile(
+      appFile: File,
+      analysisMode: AnalysisMode
+  ): Unit = {
+    logIfVerbose("Analyzing " + appFile.getPath)
+
     analysisMode match {
       case AnalyzeFromJAR => analyzeJAR(appFile)
       case AnalyzeFromAPK => analyzeAPK(appFile)
@@ -177,61 +199,75 @@ object ClassLoaderUsageAnalysis {
     }
   }
 
-  def analyzeJAR(jarFile: File): Unit = {
+  private def analyzeJAR(jarFile: File): Unit = {
     val jarName = jarFile.getAbsolutePath.split("/").last
 
-    val androidLib = new File(AndroidJarAnalysis.identifyAndroidJar(jarFile))
-    val project : Project[URL] = Project(Array(jarFile), Array(stdLib, androidLib))
+    val project: Project[URL] = Project(jarFile)
 
-    val (classLoaderInstantiations, instantiatedClassLoaderTypes) =
-      new ClassLoaderFinder(project).findClassLoaderInstantiationsAndVariety()
+    val (instanciationAmountByClassLoader, absoluteSumOfClassLoaderInstances) =
+      new ClassLoaderFinder(project).computeClassLoaderVariety()
 
-    if (classLoaderInstantiations.nonEmpty) {
-      logClassLoaderInstantiationResult(
-        jarName,
-        classLoaderInstantiations.size,
-        instantiatedClassLoaderTypes.size
-      )
-    }
+    logClassLoaderInstantiationResult(
+      jarName,
+      instanciationAmountByClassLoader,
+      absoluteSumOfClassLoaderInstances
+    )
   }
 
-  def analyzeAPK(apkFile: File): Unit = {
-    println("Analyzing APK...")
+  private def analyzeAPK(apkFile: File): Unit = {
+    logIfVerbose("Analyzing APK...")
     val apkManager = new APKManager(apkFile.getPath)
     val jarFile = new File(apkManager.pathToJAR)
     analyzeJAR(jarFile)
   }
 
-  def logClassLoaderInstantiationResult(
+  private def logClassLoaderInstantiationResult(
       appFileName: String,
-      instantiationAmount: Int,
-      instantiatedClassLoaderTypeAmount: Int
+      instantiationAmountByClassLoader: mutable.LinkedHashMap[ObjectType, Int],
+      absoluteSumOfClassLoaderInstances: Int
   ): Unit = {
-    outputSteam.write(
-      s"$appFileName: \t \t $instantiationAmount instantiations of $instantiatedClassLoaderTypeAmount different types\n"
-    )
+    val csvResultWriter = CSVWriter.open(createOutputFile(appFileName))
+
+    csvResultWriter.writeRow(Seq("Sum", absoluteSumOfClassLoaderInstances))
+    instantiationAmountByClassLoader.foreach {
+      classLoaderTypeAndInstanceAmount =>
+        csvResultWriter.writeRow(
+          Seq(
+            classLoaderTypeAndInstanceAmount._1,
+            classLoaderTypeAndInstanceAmount._2
+          )
+        )
+    }
+
+    csvResultWriter.close()
   }
 
-  def getOnlyFilesToAnalyzeFilter(analysisMode: AnalysisMode): FileFilter = {
-    (file: File) =>
-      {
-        val path = file.getPath
-        analysisMode match {
-          case AnalyzeFromJAR => path.endsWith(".jar")
-          case AnalyzeFromAPK => path.endsWith(".apk")
-          case AnalyzeFromAny => path.endsWith(".jar") || path.endsWith(".apk")
-        }
+  private def createOutputFile(appFileName: String): File = {
+    val outputFilePath = s"$outputDirectoryPath/$appFileName.csv"
+    new File(outputFilePath)
+  }
+
+  private def getOnlyFilesToAnalyzeFilter(
+      analysisMode: AnalysisMode
+  ): FileFilter = { (file: File) =>
+    {
+      val path = file.getPath
+      analysisMode match {
+        case AnalyzeFromJAR => path.endsWith(".jar")
+        case AnalyzeFromAPK => path.endsWith(".apk")
+        case AnalyzeFromAny => path.endsWith(".jar") || path.endsWith(".apk")
       }
+    }
   }
 
-  def getStandardOutputFile: File = {
+  private def getStandardOutputDirectory: File = {
     val pathToOutputDir = StringDecryption.outputDir + "/classLoaderAnalysis/"
     val outputDir = new File(pathToOutputDir)
     if (!outputDir.exists()) outputDir.mkdir()
-    val output = new File(pathToOutputDir + "results.txt")
-    if (!output.exists()) output.createNewFile()
-    output
+    outputDir
   }
+
+  private def logIfVerbose(obj: Any): Unit = if (verbose) println(obj)
 
 }
 
