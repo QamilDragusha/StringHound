@@ -16,7 +16,9 @@ libraryDependencies ++= Seq(
   // required for e.g. mocking contexts etc.
   "org.mockito" % "mockito-inline" % "4.4.0",
   // required for writing class loader usage results to a .csv
-  "com.github.tototoshi" %% "scala-csv" % "1.3.10"
+  "com.github.tototoshi" %% "scala-csv" % "1.3.10",
+  // convenient and proven io tooling
+  "commons-io" % "commons-io" % "2.11.0"
 )
 unmanagedClasspath in Runtime += baseDirectory.value / "resources"
 

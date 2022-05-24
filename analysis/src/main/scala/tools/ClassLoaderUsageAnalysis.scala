@@ -5,18 +5,15 @@ import helper.{APKManager, AndroidJarAnalysis, ClassLoaderFinder}
 import main.StringDecryption
 import main.StringDecryption.{ErrorLogger, outputDir, stdLib}
 import org.apache.commons.cli.{DefaultParser, Options}
+import org.apache.commons.io.IOUtils
 import org.opalj.br.ObjectType
 import org.opalj.br.analyses.Project
 import org.opalj.log.{GlobalLogContext, OPALLogger}
-import tools.AnalysisMode.{
-  AnalysisMode,
-  AnalyzeFromAPK,
-  AnalyzeFromAny,
-  AnalyzeFromJAR
-}
+import tools.AnalysisMode.{AnalysisMode, AnalyzeFromAPK, AnalyzeFromAny, AnalyzeFromJAR, AnalyzeLibrary}
 
-import java.io.{BufferedReader, File, FileFilter, FileReader, FileWriter}
+import java.io.{BufferedReader, File, FileFilter, FileOutputStream, FileReader, FileWriter}
 import java.net.URL
+import java.util.zip.ZipFile
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -37,8 +34,8 @@ object ClassLoaderUsageAnalysis {
 
     println(s"Analyzing from $path...")
 
-    val filesToAnalyze = determineFilesToAnalyze(path, analysisMode).par
-    filesToAnalyze.foreach(analyzeAppFromFile(_, analysisMode))
+    val filesToAnalyze = determineFilesToAnalyze(path, analysisMode)
+    filesToAnalyze.par.foreach(analyzeFile(_, analysisMode))
 
     println("Terminating analysis...")
 
@@ -53,11 +50,19 @@ object ClassLoaderUsageAnalysis {
 
     val jarOption = "jar"
     val apkOption = "apk"
+    val libraryOption = "lib"
     val pathOption = "p"
     val outputOption = "o"
     val verboseOption = "v"
 
     val options = new Options()
+
+    options.addOption(
+      libraryOption,
+      false,
+      "Analyze given libraries which are either in aar format or another"
+    )
+
     options.addOption(
       jarOption,
       false,
@@ -110,6 +115,8 @@ object ClassLoaderUsageAnalysis {
       (path, AnalysisMode.AnalyzeFromJAR)
     } else if (commandLine.hasOption(apkOption)) {
       (path, AnalysisMode.AnalyzeFromAPK)
+    } else if (commandLine.hasOption(libraryOption)) {
+      (path, AnalysisMode.AnalyzeLibrary)
     } else {
       (path, AnalysisMode.AnalyzeFromAny)
     }
@@ -169,6 +176,7 @@ object ClassLoaderUsageAnalysis {
     analysisMode match {
       case AnalyzeFromJAR => filePath.endsWith(".jar")
       case AnalyzeFromAPK => filePath.endsWith(".apk")
+      case AnalyzeLibrary => filePath.endsWith(".jar") || filePath.endsWith(".aar")
       case _              => filePath.endsWith(".jar") || filePath.endsWith(".apk")
     }
   }
@@ -183,18 +191,43 @@ object ClassLoaderUsageAnalysis {
     }
   }
 
-  private def analyzeAppFromFile(
-      appFile: File,
-      analysisMode: AnalysisMode
+  private def analyzeFile(
+                           fileToAnalyze: File,
+                           analysisMode: AnalysisMode
   ): Unit = {
-    logIfVerbose("Analyzing " + appFile.getPath)
+    logIfVerbose("Analyzing " + fileToAnalyze.getPath)
 
     analysisMode match {
-      case AnalyzeFromJAR => analyzeJAR(appFile)
-      case AnalyzeFromAPK => analyzeAPK(appFile)
+      case AnalyzeFromJAR => analyzeJAR(fileToAnalyze)
+      case AnalyzeFromAPK => analyzeAPK(fileToAnalyze)
       case AnalyzeFromAny => {
-        if (appFile.getPath.endsWith(".jar")) analyzeJAR(appFile)
-        else if (appFile.getPath.endsWith(".apk")) analyzeAPK(appFile)
+        if (fileToAnalyze.getPath.endsWith(".jar")) analyzeJAR(fileToAnalyze)
+        else if (fileToAnalyze.getPath.endsWith(".apk")) analyzeAPK(fileToAnalyze)
+      }
+      case AnalyzeLibrary => {
+        if (fileToAnalyze.getPath.endsWith(".jar")) analyzeJAR(fileToAnalyze)
+        else if (fileToAnalyze.getPath.endsWith(".aar")) analyzeAAR(fileToAnalyze)
+      }
+    }
+  }
+
+  private def analyzeAAR(aarFile: File): Unit = {
+    print("Analyzing given aar...")
+    val aarFileArchive = new ZipFile(aarFile.getPath)
+    val archiveEntries = aarFileArchive.entries()
+
+    while(archiveEntries.hasMoreElements) {
+      val entryUnderInspection = archiveEntries.nextElement()
+      if (entryUnderInspection.getName.endsWith(".jar")) {
+        print(entryUnderInspection.getName)
+        val entryInput = aarFileArchive.getInputStream(entryUnderInspection)
+
+        val tempJarFile = File.createTempFile(entryUnderInspection.getName, null)
+        tempJarFile.deleteOnExit()
+
+        val entryToTempOutput = new FileOutputStream(tempJarFile);
+        IOUtils.copy(entryInput, entryToTempOutput)
+        analyzeJAR(tempJarFile)
       }
     }
   }
@@ -257,6 +290,7 @@ object ClassLoaderUsageAnalysis {
         case AnalyzeFromAPK => path.endsWith(".apk")
         case AnalyzeFromAny => path.endsWith(".jar") || path.endsWith(".apk")
       }
+
     }
   }
 
@@ -273,5 +307,5 @@ object ClassLoaderUsageAnalysis {
 
 object AnalysisMode extends Enumeration {
   type AnalysisMode = Value
-  val AnalyzeFromJAR, AnalyzeFromAPK, AnalyzeFromAny = Value
+  val AnalyzeFromJAR, AnalyzeFromAPK, AnalyzeLibrary, AnalyzeFromAny = Value
 }
