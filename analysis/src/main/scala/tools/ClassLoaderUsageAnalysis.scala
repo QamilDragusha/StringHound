@@ -11,7 +11,7 @@ import org.opalj.br.analyses.Project
 import org.opalj.log.{GlobalLogContext, OPALLogger}
 import tools.AnalysisMode.{AnalysisMode, AnalyzeFromAPK, AnalyzeFromAny, AnalyzeFromJAR, AnalyzeLibrary}
 
-import java.io.{BufferedReader, File, FileFilter, FileOutputStream, FileReader, FileWriter}
+import java.io.{BufferedReader, File, FileFilter, FileOutputStream, FileReader, FileWriter, PrintWriter}
 import java.net.URL
 import java.util.zip.ZipFile
 import scala.collection.mutable
@@ -25,6 +25,7 @@ object ClassLoaderUsageAnalysis {
 
   private var outputDirectory: File = _
   private var verbose = false
+  private var amountOfSuccessfullyAnalyzedFiles = 0
 
   private lazy val outputDirectoryPath: String = outputDirectory.getPath
 
@@ -36,6 +37,8 @@ object ClassLoaderUsageAnalysis {
 
     val filesToAnalyze = determineFilesToAnalyze(path, analysisMode)
     filesToAnalyze.par.foreach(analyzeFile(_, analysisMode))
+
+    createLog(filesToAnalyze.length)
 
     println("Terminating analysis...")
 
@@ -197,22 +200,25 @@ object ClassLoaderUsageAnalysis {
   ): Unit = {
     logIfVerbose("Analyzing " + fileToAnalyze.getPath)
 
-    analysisMode match {
-      case AnalyzeFromJAR => analyzeJAR(fileToAnalyze)
-      case AnalyzeFromAPK => analyzeAPK(fileToAnalyze)
-      case AnalyzeFromAny => {
-        if (fileToAnalyze.getPath.endsWith(".jar")) analyzeJAR(fileToAnalyze)
-        else if (fileToAnalyze.getPath.endsWith(".apk")) analyzeAPK(fileToAnalyze)
+    try {
+      analysisMode match {
+        case AnalyzeFromJAR => analyzeJAR(fileToAnalyze)
+        case AnalyzeFromAPK => analyzeAPK(fileToAnalyze)
+        case AnalyzeFromAny => {
+          if (fileToAnalyze.getPath.endsWith(".jar")) analyzeJAR(fileToAnalyze)
+          else if (fileToAnalyze.getPath.endsWith(".apk")) analyzeAPK(fileToAnalyze)
+        }
+        case AnalyzeLibrary => {
+          if (fileToAnalyze.getPath.endsWith(".jar")) analyzeJAR(fileToAnalyze)
+          else if (fileToAnalyze.getPath.endsWith(".aar")) analyzeAAR(fileToAnalyze)
+        }
       }
-      case AnalyzeLibrary => {
-        if (fileToAnalyze.getPath.endsWith(".jar")) analyzeJAR(fileToAnalyze)
-        else if (fileToAnalyze.getPath.endsWith(".aar")) analyzeAAR(fileToAnalyze)
-      }
+      amountOfSuccessfullyAnalyzedFiles += 1
     }
   }
 
   private def analyzeAAR(aarFile: File): Unit = {
-    print("Analyzing given aar...")
+    logIfVerbose(s"Analyzing given aar ${aarFile.getPath} ...")
     val aarFileArchive = new ZipFile(aarFile.getPath)
     val archiveEntries = aarFileArchive.entries()
 
@@ -303,7 +309,18 @@ object ClassLoaderUsageAnalysis {
 
   private def logIfVerbose(obj: Any): Unit = if (verbose) println(obj)
 
+  private def createLog(totalAmountOfFiles: Int): Unit = {
+    val logFilePath = s"$outputDirectoryPath/log.txt"
+    val logFile = new File(logFilePath)
+    if(!logFile.exists()) logFile.createNewFile()
+    val logPrintWriter = new PrintWriter(new FileWriter(logFile))
+    val performanceInPercent = 100 * amountOfSuccessfullyAnalyzedFiles / totalAmountOfFiles
+    logPrintWriter.print(s"Analyzed $totalAmountOfFiles files. $amountOfSuccessfullyAnalyzedFiles of $totalAmountOfFiles were succesfully analyzed ($performanceInPercent%)")
+    logPrintWriter.close()
+  }
+
 }
+
 
 object AnalysisMode extends Enumeration {
   type AnalysisMode = Value

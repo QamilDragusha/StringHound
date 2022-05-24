@@ -19,6 +19,9 @@ following:
 > The first row holds the total amound of class loader instances found while any other
 > row holds a class loader type found as well as it's found instances
 
+Additionally, a logfile will be created which holds information on how many of the
+given files were successfully analyzed.
+
 ### Requirements
 
 If apps in the APK format are to be  analyzed it is currently required to have
@@ -39,20 +42,20 @@ the files. All top-level entires will be considered. You can also specify the pa
 *.txt* file containing all paths to files you want to analyze. The paths contained in 
 this file must be seperated by line breaks.
 
-###### APK/JAR Filter
-If you only want either *.jar* or *.apk* file(s) to be considered for the analysis, you
-can specify that by setting **either** the *-jar* **or** the *-apk* flag. By default, all
+###### APK/JAR/AAR Filter
+If you only want either *.jar*, *.aar* or *.apk* file(s) to be considered for the analysis, you
+can specify that by setting **either** the *-jar* **or** the *-apk* **or** the *-lib* flag. By default, all
 jar/apk files in a directory or a file directly specified will be considered. Using jar files
 is considerably faster as APKs have to be repackaged first.
 
 ###### Output Directory
 By default, the results will be documented in a *classLoaderAnalysis* directory
 which will be created in the project folder. If you wish to specify a custom output directory,
-that can be done using the optional *-o* argument. **Each app** analyzed will result in an *.csv* 
-formatted conclusion named analogous to the app.
+that can be done using the optional *-o* argument. **Each app / file** analyzed will result in an *.csv* 
+formatted conclusion named analogous to the app / file.
 
 *Naming Example:*
-> The app to be analzed is named *fancy_app_analyze_me.jar*. This will yield a result-file named
+> An app to be analzed is named *fancy_app_analyze_me.jar*. This will yield a result-file named
 > *fancy_app_analyze_me.jar.csv* in the ouput specified (if any) 
 
 ###### Logging
