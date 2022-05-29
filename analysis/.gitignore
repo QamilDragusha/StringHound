@@ -1,6 +1,13 @@
 *.class
 *.cache
-*/jars/*
+/jars/*
+/decodedApks/*
+/logs/*
 /target/
 */target/*
 /classLoaderAnalysis/
+*.log
+/results/
+.idea
+*/__pycache__/*
+*.pyc
