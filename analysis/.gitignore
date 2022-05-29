@@ -8,7 +8,7 @@
 /classLoaderAnalysis/
 *.log
 /results/
-.idea/
+.idea/*
 */__pycache__/*
 *.pyc
 ../.idea/*

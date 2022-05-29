@@ -160,8 +160,9 @@ class SlicingClassAnalysis(
       classLoaderFinder.findClassLoaderInstantiations()
 
     val methodInstructionsToAnalyze =
-      classLoaderInstatiations. // TODO: Qamil: Nut für Debugging-Zwecke.
-        filter{ clIn => clIn._1.classFile.fqn.contains("zzfy") }
+      classLoaderInstatiations
+        //. // TODO: Qamil: Nut für Debugging-Zwecke.
+        //filter{ clIn => clIn._1.classFile.fqn.contains("zzfy") }
 
     println("printed methodInstructionsInstatiatingClassLoaders")
 
@@ -347,20 +348,23 @@ class SlicingClassAnalysis(
     methodsInvokingMethodsOfInterest
   }
 
-  /// Index des Parameters kann buer schon zur Deobfuskation genbutzt werden
+  /// Index des Parameters kann buer schon zur Deobfuskation genutzt werden
   def processOrigins(
       index: Int,
       sinkInfo: SinkInfo,
       method: Method,
       project: Project[URL],
       context: ClassSlicingContext,
-      result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] }
+      result: AIResult { val domain: DefaultDomainWithCFGAndDefUse[URL] } // Qamil: AbstractInterpetationResult?
   ): Unit = {
 
     Dumper.dumpMethod(method, "processOrigins/")
 
     val operands = result.operandsArray(sinkInfo.sinkPC)
-    if (operands == null) return
+    if (operands == null) {
+      println("Operands == null")
+      return
+    }
     //println("after return: index = " + index + ", sinkInfo = " + sinkInfo + ", method = " + method + ", project = " + "project" + ", resultDomain = " + result.domain)
     val op = operands(index)
     val methodClass = method.classFile.fqn
@@ -1327,7 +1331,7 @@ class SlicingClassAnalysis(
 
   def addMethodToClass(cf: ClassFile, mt: MethodTemplate): ClassFile = {
     var copiedMethods = cf.methods
-      .filterNot(m ⇒ m.descriptor == mt.descriptor && m.name == mt.name)
+      .filterNot(m ⇒ m.descriptor == mt.descriptor   && m.name == mt.name)
       .map[MethodTemplate](_.copy())
     if (mt.name == "<clinit>") {
       copiedMethods :+= buildDummyStatic(cf)
@@ -1893,7 +1897,7 @@ class SlicingClassAnalysis(
 
     //Thread.sleep(10000)
 
-     val exceptions = project.allClassFiles filter {classFile => project.classHierarchy.allSupertypes(classFile.thisType, false).contains(ObjectType.Exception)}
+     val exceptions = project.allClassFiles filter {classFile => project.classHierarchy.allSuperinterfacetypes(classFile.thisType, false).contains(ObjectType.Exception)}
 
     // TODO: QAMIL: Debug: Nur zum Testen
     relevantClasses ++= exceptions
@@ -1928,21 +1932,21 @@ class SlicingClassAnalysis(
     ).map {ObjectType(_)}
 
     //val additionalClasses = classesToLoad.map{objectType => project.classFile(objectType).get}.toSet
-    val googleLib = project.allProjectClassFiles.filter(classFile => classFile.fqn.startsWith("com/google/")).toSet
+    //val googleLib = project.allProjectClassFiles.filter(classFile => classFile.fqn.startsWith("com/google/")).toSet
 
     // googleLib foreach(classFile => println("googleLibClassFile: " + classFile.fqn))
 
     //relevantClasses ++= additionalClasses
-    relevantClasses ++= googleLib
+    //relevantClasses ++= googleLib
 
 
-    relevantClasses = relevantClasses.filter(classFile => !classFile.fqn.startsWith("android"))
+    //relevantClasses = relevantClasses.filter(classFile => !classFile.fqn.startsWith("android"))
 
-    relevantClasses foreach(classFile => println("relevantClassFile: " + classFile.fqn))
+    //relevantClasses foreach(classFile => println("relevantClassFile: " + classFile.fqn))
 
-    relevantMethods map(method => method.classFile.fqn) foreach(fqn => println(s"method from $fqn"))
+    //relevantMethods map(method => method.classFile.fqn) foreach(fqn => println(s"method from $fqn"))
 
-    relevantFields map(field => field.classFile.fqn) foreach(fqn => println(s"relevant field from $fqn"))
+    //relevantFields map(field => field.classFile.fqn) foreach(fqn => println(s"relevant field from $fqn"))
 
     (relevantMethods, relevantFields, relevantClasses)
     //(relevantMethods, relevantFields, project.allClassFiles.toSet)
