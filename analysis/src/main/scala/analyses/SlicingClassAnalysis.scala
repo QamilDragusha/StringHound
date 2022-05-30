@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Timer, TimerTask}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
-import helper.{APKManager, AndroidLibraryMocker, ClassLoaderFinder}
+import helper.{APKManager, AndroidLibraryMocker, ClassLoaderFinder, PrintLog}
 import main.StringDecryption
 import org.apache.commons.lang3.ClassUtils
 import org.mockito.Mockito.{mock, when, withSettings}
@@ -17,31 +17,14 @@ import org.opalj.{Answer => _, _}
 import org.opalj.ai.domain.PerformAI
 import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
 import org.opalj.ai.{AIResult, ValueOrigin}
-import org.opalj.ba.{
-  CLASS,
-  CODE,
-  CodeAttributeBuilder,
-  CodeElement,
-  FIELD,
-  FIELDS,
-  METHOD,
-  METHODS,
-  PUBLIC,
-  STATIC,
-  toDA
-}
+import org.opalj.ba.{CLASS, CODE, CodeAttributeBuilder, CodeElement, FIELD, FIELDS, METHOD, METHODS, PUBLIC, STATIC, toDA}
 import org.opalj.bc.Assembler
 import org.opalj.bi.ACC_PUBLIC
 import org.opalj.br.analyses.{Project, StringConstantsInformationKey}
 import org.opalj.br.instructions._
 import org.opalj.br.{PCInMethod, _}
 import org.opalj.collection.immutable.{ConstArray, RefArray}
-import org.opalj.slicing.{
-  ClassDeobfuscationSlicer,
-  DeobfuscationSlicer,
-  ParameterUsageException,
-  SlicingConfiguration
-}
+import org.opalj.slicing.{ClassDeobfuscationSlicer, DeobfuscationSlicer, ParameterUsageException, SlicingConfiguration}
 import org.opalj.util.InMemoryAndURLClassLoader
 import android.content.Context
 import android.content.pm.{ApplicationInfo, PackageInfo, PackageManager}
@@ -126,7 +109,7 @@ class SlicingClassAnalysis(
     override def run(): Unit = {
       val slicesCount = attempts.get()
       System.setOut(out)
-      println("#slices: " + slicesCount)
+      PrintLog.i("#slices: " + slicesCount)
       System.setOut(devNullPrintStream)
     }
   }
@@ -135,7 +118,7 @@ class SlicingClassAnalysis(
     override def run(): Unit = {
       val executionCount = executions.get()
       System.setOut(out)
-      println("#executions: " + executionCount)
+      PrintLog.i("#executions: " + executionCount)
       System.setOut(devNullPrintStream)
     }
   }
@@ -185,12 +168,12 @@ class SlicingClassAnalysis(
     //. // TODO: Qamil: Nut für Debugging-Zwecke.
     //filter{ clIn => clIn._1.classFile.fqn.contains("zzfy") }
 
-    println("printed methodInstructionsInstatiatingClassLoaders")
+    PrintLog.d("printed methodInstructionsInstatiatingClassLoaders")
 
     if (methodInstructionsToAnalyze.nonEmpty) {
 
       System.setOut(out)
-      println("Methods to slice: " + methodInstructionsToAnalyze.size)
+      PrintLog.v("Methods to slice: " + methodInstructionsToAnalyze.size)
       System.setOut(devNullPrintStream)
 
       val cleanTimer = new Timer()
@@ -239,10 +222,10 @@ class SlicingClassAnalysis(
                         "java/nio/ByteBuffer"
                       )
                     ) {
-                      println(
+                      PrintLog.d(
                         "\n\n\nmatching instruction " + instruction + ", declared at " + instruction.asMethodInvocationInstruction.declaringClass
                       )
-                      println("typeChecked: " + parameterType)
+                      PrintLog.d("typeChecked: " + parameterType)
 
                       // QAMIL: DUMP ANOTHER METHOD ########
                       Dumper.dumpMethod(
@@ -278,7 +261,7 @@ class SlicingClassAnalysis(
             }
           } catch {
             case e: Throwable ⇒
-              println(s"doAnalyze catched exception $e")
+              PrintLog.e(s"doAnalyze catched exception $e")
               if (StringDecryption.logSlicing) {
                 val sb = new StringBuilder()
                 sb.append(parameters.head + "\n")
@@ -296,13 +279,13 @@ class SlicingClassAnalysis(
 
     } else {
       System.setOut(out)
-      println("No encryption method skipping: " + parameters.head)
+      PrintLog.v("No encryption method skipping: " + parameters.head)
 
     }
     val t4 = System.currentTimeMillis()
     System.setErr(err)
     System.setOut(out)
-    println(
+    PrintLog.i(
       "Write results to -> " + StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
     )
 
@@ -359,7 +342,7 @@ class SlicingClassAnalysis(
         .toSet
     } catch {
       case _: Throwable =>
-        println("Throwable without print")
+        PrintLog.d("Throwable without print")
         // qamil: Brauchen wir das mit dem CallGraphen überhaupt?
         val callGraph = CallGraphFactory.createCHACallGraph(project)
         methodsInvokingMethodsOfInterest = methodsOfInterest
@@ -389,23 +372,23 @@ class SlicingClassAnalysis(
 
     val operands = result.operandsArray(sinkInfo.sinkPC)
     if (operands == null) {
-      println("Operands == null")
+      PrintLog.d("Operands == null")
       return
     }
     //println("after return: index = " + index + ", sinkInfo = " + sinkInfo + ", method = " + method + ", project = " + "project" + ", resultDomain = " + result.domain)
     val op = operands(index)
     val methodClass = method.classFile.fqn
-    println(
+    PrintLog.d(
       s"matching op with index $index from $methodClass and method $method"
     )
     op match {
       case result.domain.StringValue(
             s
           ) ⇒
-        println(
+        PrintLog.d(
           "We are missing a single String "
         ) // Not Obfuscated or deob method // Sollte ich vllt nachverfolgen wenn ein String hierdrinsteht, manche Klassen stehen im Klartext
-        println("StringValue" + s)
+        PrintLog.d("StringValue" + s)
       // QAMIL : Scheint bei den Methoden hier die Regel zu sein
       case result.domain.DomainReferenceValueTag(v) ⇒
         //println("DOMAINREFERENCEVALUETAG")
@@ -449,19 +432,19 @@ class SlicingClassAnalysis(
             )
         } else {
           val types = v.allValues.mkString(" - ")
-          println(s"No type of interest was found, may be null. Types: $types ")
+          PrintLog.d(s"No type of interest was found, may be null. Types: $types ")
         }
 
       case result.domain.MultipleReferenceValues(s) ⇒
         s.foreach {
 
           case result.domain.StringValue(st) ⇒
-            println(
+            PrintLog.d(
               "Here is a String we have ignored"
             ) //println("DOMAINMULTIPLEREFERENCEVALUES") // Not Obfuscated or deob method
           case value ⇒
             //println("DOMAINMULTIPLEREFERENCEVALUES")
-            println("V: " + value.allValues.mkString(" - "))
+            PrintLog.d("V: " + value.allValues.mkString(" - "))
             value.origins.foreach(
               buildMethodForOrigin(
                 _,
@@ -474,7 +457,7 @@ class SlicingClassAnalysis(
             )
         }
       case e ⇒
-        print("processOrigins wont process " + e)
+        PrintLog.v("processOrigins wont process " + e)
     }
     //                    domain.foreachOrigin(op, buildMethodForOrigin(_))
   }
@@ -496,7 +479,7 @@ class SlicingClassAnalysis(
     // QAMIL : macht Opcode bei origin überhaupt Sinn? Sieht nämlich eher so aus, als sei das die
     // Nummer der Instruktion im Code, also ein Identifier für die richtige Instruktion
     // Parameter sind negativ, hier wird versucht, keine Parameter weiter zu slicen, da intraprozedual
-    println("origin : " + origin)
+    PrintLog.d("origin : " + origin)
 
     // QAMIL: Dump both variations ######
     Dumper.dumpMethod(
@@ -516,14 +499,14 @@ class SlicingClassAnalysis(
     if (origin >= 0) { // Qamil 21.3: Origin ist also die konkrete Instruktion
       try {
         val ins: Instruction = result.code.instructions(origin)
-        println("Built-target instruction: " + ins)
+        PrintLog.d("Built-target instruction: " + ins)
         ins.opcode match {
           // QAMIL: War vorher aus irgendeinem Grund nur Invokespeacial
           case INVOKESPECIAL.opcode | INVOKEVIRTUAL.opcode |
               INVOKESTATIC.opcode ⇒
             // HIER DEN STRING / BYTEARRAY nachverfolgen, welcher dem ClassLoader übergeben wird
 
-            println("MATCHED Invocation")
+            PrintLog.d("MATCHED Invocation")
 
             val mii = ins.asMethodInvocationInstruction
             val hasBaseOrStringParam =
@@ -580,7 +563,7 @@ class SlicingClassAnalysis(
             }
           // QAMIL: Neu eingefügt, um im Beispiel vom DynamiteModule die String-Ursprünge zurückverfolgen zu können
           case GETSTATIC.opcode =>
-            println("MATCHED GETSTATIC")
+            PrintLog.d("MATCHED GETSTATIC")
             buildAndCallMethod(
               method,
               origin,
@@ -589,12 +572,12 @@ class SlicingClassAnalysis(
               context
             )(project)
 
-          case _ ⇒ println("MATCHED NOTHING")
+          case _ ⇒ PrintLog.i("MATCHED NOTHING")
           //println(body.instructions(origin))
         }
       } catch {
         case ex: Throwable =>
-          println("Throwable thrown")
+          PrintLog.e("Throwable thrown")
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
             StringDecryption.logger.error(ex.getMessage)
@@ -751,7 +734,7 @@ class SlicingClassAnalysis(
             context
           )
 
-          println(if (success) "Erfolg" else "Kein Erfolg")
+          PrintLog.v(if (success) "Erfolg" else "Kein Erfolg")
 
           if (
             bruteforce && success &&
@@ -762,11 +745,11 @@ class SlicingClassAnalysis(
             decryptionContextSet += method -> (modifiedMethod, strippedClasses, newClass)
           }
         } else {
-          println("Undefined Method template")
+          PrintLog.d("Undefined Method template")
         }
       } catch {
         case ex: java.lang.VerifyError =>
-          println("Exception " + ex)
+          PrintLog.e("Exception " + ex)
           verifyErrors.incrementAndGet()
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
@@ -774,7 +757,7 @@ class SlicingClassAnalysis(
             StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: java.lang.reflect.InvocationTargetException =>
-          println(s"InvocationTargetException $ex, printing Stack Trace")
+          PrintLog.e(s"InvocationTargetException $ex, printing Stack Trace")
           ex.printStackTrace()
           invocationTargetError.incrementAndGet()
           if (StringDecryption.logSlicing) {
@@ -783,7 +766,7 @@ class SlicingClassAnalysis(
             StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: java.lang.NullPointerException =>
-          println("Exception " + ex)
+          PrintLog.e("Exception " + ex)
           ex.printStackTrace()
           nullPointerError.incrementAndGet()
           if (StringDecryption.logSlicing) {
@@ -792,7 +775,7 @@ class SlicingClassAnalysis(
             StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: ParameterUsageException ⇒
-          println("Exception " + ex)
+          PrintLog.e("Exception " + ex)
           parameterErrors.incrementAndGet()
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
@@ -803,12 +786,12 @@ class SlicingClassAnalysis(
         //androidx/coordinator
         // qamil BREAKPOINT
         case ex: java.lang.NoClassDefFoundError =>
-          println(
+          PrintLog.e(
             "Exception " + ex
               .asInstanceOf[java.lang.NoClassDefFoundError]
               .getStackTrace()
               .foreach { stackTraceElement =>
-                println(
+                PrintLog.d(
                   "Stacktrace @ " + stackTraceElement.getFileName + " : " + stackTraceElement.getLineNumber
                 )
               }
@@ -821,19 +804,19 @@ class SlicingClassAnalysis(
           }
 
         case ex: java.util.NoSuchElementException =>
-          println("Exception " + ex)
+          PrintLog.e("Exception " + ex)
           if (StringDecryption.logSlicing) {
             StringDecryption.logger.error(parameters.head)
             StringDecryption.logger.error(ex.getMessage)
             StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: ThreadDeath =>
-          println("Exception " + ex)
+          PrintLog.i("Exception " + ex)
           throw ex
 
         case ex: Throwable =>
           ex.getStackTrace foreach println
-          println("Generic Exception LLLL " + ex)
+          PrintLog.e("Generic Exception LLLL " + ex)
           ex.printStackTrace()
           genericErrors.incrementAndGet()
           if (StringDecryption.logSlicing) {
@@ -878,7 +861,7 @@ class SlicingClassAnalysis(
       loi: Int
   )(implicit project: Project[_]): (Option[MethodTemplate], Option[String]) = {
 
-    println(
+    PrintLog.d(
       "buildMethod: " + method + " with LoI: " + loi + " and origin " + origin + " from class " + method.classFile.fqn
     )
 
@@ -893,7 +876,7 @@ class SlicingClassAnalysis(
         !typeIsOrHoldsCharSequenceObjectType(_)(project.classHierarchy)
       )
     ) {
-      println("buildMethod would return nothing")
+      PrintLog.d("buildMethod would return nothing")
       usesParams.incrementAndGet()
       // qamil: TODO: Refactor to only return method
       (Some(m), None)
@@ -915,7 +898,7 @@ class SlicingClassAnalysis(
 
     // qamil: Der ClassLoader ist ein ClassLoader, welcher bereits die Bytedaten der zu ladenen Klassen beinhaltet
 
-    println(
+    PrintLog.d(
       "call reflective method with modified method " + modifiedMethod.name
     )
 
@@ -932,10 +915,10 @@ class SlicingClassAnalysis(
     val constructors =
       clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0)
 
-    println("loaded classes")
+    PrintLog.d("loaded classes")
 
     if (modifiedMethod.name == "<clinit>") {
-      println("constructor <clinit>")
+      PrintLog.d("constructor <clinit>")
       //            attempts.incrementAndGet()
       clazz.getMethod(DUMMYSTATIC).invoke(null)
 
@@ -947,7 +930,7 @@ class SlicingClassAnalysis(
         context
       )
     } else if (modifiedMethod.name == "<init>") {
-      println("constructor <init>")
+      PrintLog.d("constructor <init>")
       //            attempts.incrementAndGet()
       constructors(0).setAccessible(true)
       constructors(0).newInstance()
@@ -960,7 +943,7 @@ class SlicingClassAnalysis(
         context
       )
     } else if (constructors.nonEmpty || modifiedMethod.isStatic) {
-      println("constructor nonEmpty or staticMethod")
+      PrintLog.d("constructor nonEmpty or staticMethod")
       val instance =
         if (modifiedMethod.isStatic) null
         else {
@@ -985,7 +968,7 @@ class SlicingClassAnalysis(
           _.asInstanceOf[Object]
         )
 
-      println(
+      PrintLog.d(
         "about to invoke a static method or one with a non-empty constructor"
       )
 
@@ -1039,7 +1022,7 @@ class SlicingClassAnalysis(
             context
           )
         } catch {
-          case _: Throwable => println("Unhandled Exception")
+          case _: Throwable => PrintLog.e("Unhandled Exception")
         }
       }
     }
@@ -1617,7 +1600,7 @@ class SlicingClassAnalysis(
           th.interrupt()
           th.interrupt()
         } catch {
-          case _: Throwable => println("Unhandled THrowable")
+          case _: Throwable => PrintLog.e("Unhandled THrowable")
         }
         try {
           val runnableField = th.getClass.getDeclaredField("target")
@@ -1625,7 +1608,7 @@ class SlicingClassAnalysis(
           val r = runnableField.get(th).asInstanceOf[Runnable]
           transitiveKill(r)
         } catch {
-          case _: Throwable => println("Unhandled Throwable")
+          case _: Throwable => PrintLog.e("Unhandled Throwable")
         }
         th.stop()
       }
@@ -1679,14 +1662,14 @@ class SlicingClassAnalysis(
       encStringOption: Option[String],
       context: ClassSlicingContext
   ): Boolean = {
-    println("invoking reflection")
+    PrintLog.d("invoking reflection")
     // TODO:
     try {
       jvmMethod.invoke(instance, params: _*)
-      println("invoked reflection")
+      PrintLog.d("invoked reflection")
       logResult(resultClass, originalMethod, sinkInfo, encStringOption, context)
     } catch {
-      case e: Throwable => println(s"tryInvoke Exception $e"); false
+      case e: Throwable => PrintLog.e(s"tryInvoke Exception $e"); false
     }
   }
 
@@ -1697,12 +1680,12 @@ class SlicingClassAnalysis(
       encStringOption: Option[String],
       context: ClassSlicingContext
   ): Boolean = {
-    println("logResult: Getting Result field")
+    PrintLog.d("logResult: Getting Result field")
     val resultField = resultClass.getDeclaredField("result")
-    println("logResult: Setting Result Field Accessible")
+    PrintLog.d("logResult: Setting Result Field Accessible")
     resultField.setAccessible(true)
     if (context.dataTypeOfInterest == ObjectType.String) {
-      println("logResult: The Type of Interest is a String")
+      PrintLog.d("logResult: The Type of Interest is a String")
       val res = resultField.get(null).asInstanceOf[String]
       if (res.nonEmpty && res != "null") {
         // qamil: TODO: Check whether that can stay as is and how it should be handled
@@ -2014,7 +1997,7 @@ class SlicingClassAnalysis(
     val t4 = System.currentTimeMillis()
     System.setErr(err)
     System.setOut(out)
-    println(
+    PrintLog.i(
       "Write results to -> " + StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
     )
 
