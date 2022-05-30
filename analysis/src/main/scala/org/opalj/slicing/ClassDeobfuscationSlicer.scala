@@ -5,6 +5,7 @@ package org.opalj.slicing
 import customBRClasses.androidLib.AndroidContext
 import customBRClasses.java.JavaClassLoader
 import customBRClasses.leakers.StringLeaker
+import helper.PrintLog
 import org.opalj.ai._
 import org.opalj.ai.domain.{RecordDefUse, ThrowAllPotentialExceptionsConfiguration}
 import org.opalj.ba.{AccessModifier, CLASS, CODE, CodeElement, FIELD, FIELDS, InsertionPosition, LabeledCode, METHOD, METHODS, PUBLIC, STATIC}
@@ -281,14 +282,14 @@ class ClassDeobfuscationSlicer(
   }
 
   private def insertResultValueLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode, objectType: ObjectType) : Unit = {
-    println("Slicer: insertResultValueLoggingInstructions")
+    PrintLog.d("Slicer: insertResultValueLoggingInstructions")
     if (objectType == ObjectType.String) {
       insertStringResultLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode)
     } else if (objectType == ObjectType("java/nio/ByteBuffer")) {
-      println("Slicer: insertResultValueLoggingInstructions for ByteBuffers")
+      PrintLog.d("Slicer: insertResultValueLoggingInstructions for ByteBuffers")
       insertByteBufferResultLoggingInstructions(maxSliced, maxLocals, pcOfSlicingCriterion, labeledCode)
     }
-    println("Slicer: inserted ResultValueLoggingInstructions if possible")
+    PrintLog.d("Slicer: inserted ResultValueLoggingInstructions if possible")
   }
 
   private def insertByteBufferResultLoggingInstructions(maxSliced: Int, maxLocals: Int, pcOfSlicingCriterion: Int, labeledCode: LabeledCode) : Unit = {

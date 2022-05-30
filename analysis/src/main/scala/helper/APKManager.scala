@@ -108,7 +108,7 @@ class APKManager(pathToAPK: String) {
 
   private def createRepackagedJarIfAbsent(jarFile: File) : Unit = {
     if (!jarFile.exists()) {
-      println(s"Repackaging $apkName into JAR...")
+      PrintLog.v(s"Repackaging $apkName into JAR...")
       val repackagingResult = Process(
         Seq(
           "bash",
@@ -122,7 +122,7 @@ class APKManager(pathToAPK: String) {
         throw new RepackagingUnsuccessfulException()
       }
     } else {
-      println(s"Reusing repackaged $apkName.jar for analysis...")
+      PrintLog.i(s"Reusing repackaged $apkName.jar for analysis...")
     }
   }
 
