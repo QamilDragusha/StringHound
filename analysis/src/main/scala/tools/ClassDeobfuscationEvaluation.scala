@@ -2,7 +2,7 @@ package tools
 
 import analyses.SlicingClassAnalysis
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
-import helper.ClassLoaderFinder
+import helper.{APKManager, ClassLoaderFinder}
 import main.StringDecryption.ErrorLogger
 import org.apache.commons.cli.{CommandLine, DefaultParser, Options}
 import org.opalj.br.ObjectType
@@ -37,9 +37,7 @@ object ClassDeobfuscationEvaluation {
     OPALLogger.updateLogger(GlobalLogContext, ErrorLogger)
     initializeCommandLine(args)
     val filePaths = readAllPathsFromPathsFile()
-    println("Evaluating apps...")
     val results = evaluate(filePaths)
-    println("Writing results")
     writeResults(results)
     val errors = erroneosUsageAnalyses.get()
     if (errors > 0) {
@@ -75,10 +73,9 @@ object ClassDeobfuscationEvaluation {
   }
 
   private def readAllPathsFromPathsFile(): Array[String] = {
-    val pathToPathsFile : String = commandLine.getOptionValue(pathsFilePathOption)
-    println(pathToPathsFile)
+    val pathToPathsFile: String =
+      commandLine.getOptionValue(pathsFilePathOption)
     var basePath = commandLine.getOptionValue(basePathOption)
-    println(basePath)
 
     if (!basePath.endsWith("/")) basePath += "/"
 
@@ -93,76 +90,88 @@ object ClassDeobfuscationEvaluation {
       .toArray
   }
 
-  private def evaluate(paths: Array[String]) : mutable.Map[ObjectType, (Int, Int)] = {
-    val (totalCharacteristics, totalRevealedCharacteristics) = analyzeUsagesAndReveals(paths)
-    val result : mutable.HashMap[ObjectType, (Int, Int)] = new mutable.HashMap()
-    totalCharacteristics.keySet.foreach(
-      key => {
-          result += {key -> Tuple2(totalCharacteristics(key), totalRevealedCharacteristics.getOrElse(key, 0))}
+  private def evaluate(
+      paths: Array[String]
+  ): mutable.Map[ObjectType, (Int, Int)] = {
+    val (totalCharacteristics, totalRevealedCharacteristics) =
+      analyzeUsagesAndReveals(paths)
+    val totalAndCustomUsagesByType: mutable.HashMap[ObjectType, (Int, Int)] = new mutable.HashMap()
+    totalCharacteristics.keySet.foreach(objectType => {
+      totalAndCustomUsagesByType += {
+        objectType -> Tuple2(
+          totalCharacteristics(objectType),
+          totalRevealedCharacteristics.getOrElse(objectType, 0)
+        )
       }
-    )
-    result
+    })
+    totalAndCustomUsagesByType
   }
+
 
   private def analyzeUsagesAndReveals(
       paths: Array[String]
   ): (mutable.Map[ObjectType, Int], mutable.Map[ObjectType, Int]) = {
-    val totalCharacteristics = new ConcurrentHashMap[ObjectType, Int]()
-    val totalRevealedCharacteristics = new ConcurrentHashMap[ObjectType, Int]()
+    var totalCharacteristics : mutable.Map[ObjectType, Int] = new mutable.HashMap()
+    var totalRevealedCharacteristics: mutable.Map[ObjectType, Int] = new mutable.HashMap()
     paths.par.foreach(filePath => {
       val appFile = new File(filePath)
       if (!appFile.exists()) {
         println(s"AppFile $filePath not found!")
       } else {
-        println(s"Analyzing $filePath")
         val (usageCharacteristics, totalUsages) =
           getSingleAppsClassLoaderUsages(appFile)
-        println(totalUsages)
         if (totalUsages > 0) {
           try {
-            val (revealCharacteristics, revealedTotal) = getSingleAppsClassLoaderAnalysisCharacteristics(appFile)
+            val (revealCharacteristics, _) =
+              getSingleAppsClassLoaderAnalysisCharacteristics(appFile)
 
-
-            usageCharacteristics.par.foreach(entry =>
-            {
-              val (objectType, amount) = entry
-              totalCharacteristics.replace(
-                objectType,
-                totalCharacteristics.getOrDefault(objectType, 0) + amount
-              )
+            // summarize resulting characteristics. Could cause race
+            // conditions without synchronization
+            synchronized {
+              totalCharacteristics = unsafelyCopyAndUpdateCharacteristics(totalCharacteristics, usageCharacteristics)
+            } // Splitting up synchonized blocks increases performance
+            synchronized{
+              totalRevealedCharacteristics = unsafelyCopyAndUpdateCharacteristics(totalRevealedCharacteristics, revealCharacteristics)
             }
-            )
 
-            revealCharacteristics.par.foreach(entry => {
-              val (objectType, amount) = entry
-              totalRevealedCharacteristics.replace(
-                objectType,
-                totalRevealedCharacteristics.getOrDefault(objectType, 0) + amount
-              )
-            })
+          } catch {
+            case _: Exception => erroneosUsageAnalyses.incrementAndGet()
           }
-          catch {
-            case _ : Exception => erroneosUsageAnalyses.incrementAndGet()
-          }
-
         }
       }
 
     })
-    (totalCharacteristics.asScala, totalRevealedCharacteristics.asScala)
+    (totalCharacteristics, totalRevealedCharacteristics)
+  }
+
+  private def unsafelyCopyAndUpdateCharacteristics(
+                                                    characteristicToUpdate: mutable.Map[ObjectType, Int],
+                                                    update: mutable.Map[ObjectType, Int]
+                                                  ): mutable.Map[ObjectType, Int] = {
+    val characteristics = characteristicToUpdate.clone()
+    update.foreach(updateEntry => {
+      val (objectTypeToUpdate, amountToAdd) = updateEntry
+      val currentAmount =  characteristics.get(objectTypeToUpdate)
+      if (currentAmount.isDefined) {
+        characteristics.update(objectTypeToUpdate, currentAmount.get + amountToAdd)
+      } else {
+        characteristics += {objectTypeToUpdate -> amountToAdd}
+      }
+    })
+    characteristics
   }
 
   private def getSingleAppsClassLoaderUsages(
       appFile: File
   ): (mutable.Map[ObjectType, Int], Int) = {
     try {
-      val classLoaderFinder = new ClassLoaderFinder(Project(appFile))
+      val apkManager = new APKManager(appFile.getPath)
+      val jarFile = new File(apkManager.pathToJAR)
+      val classLoaderFinder = new ClassLoaderFinder(Project(jarFile))
       val result = classLoaderFinder.computeClassLoaderVariety()
-      println(result)
       result
     } catch {
       case _: Exception =>
-        println("Exception")
         erroneosUsageAnalyses.incrementAndGet()
         (new mutable.LinkedHashMap[ObjectType, Int](), 0)
     }
@@ -188,7 +197,9 @@ object ClassDeobfuscationEvaluation {
     (characteristics.asScala, totalFoundClassLoaders)
   }
 
-  private def writeResults(results: mutable.Map[ObjectType, (Int, Int)]) : Unit = {
+  private def writeResults(
+      results: mutable.Map[ObjectType, (Int, Int)]
+  ): Unit = {
     val logPath = commandLine.getOptionValue(logPathOption)
     val logFile = new File(logPath)
     logFile.createNewFile()
@@ -196,7 +207,7 @@ object ClassDeobfuscationEvaluation {
     results.foreach(resultEntry => {
       val objectType = resultEntry._1
       val (totalClasses, revealedClasses) = resultEntry._2
-      logWriter.writeRow(Seq(objectType.fqn,totalClasses, revealedClasses))
+      logWriter.writeRow(Seq(objectType.fqn, totalClasses, revealedClasses))
     })
     logWriter.close()
   }

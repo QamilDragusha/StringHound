@@ -52,11 +52,12 @@ class ClassLoaderFinder(project: Project[URL]) {
   def findClassLoaderInstantiations(
       logVariety: Boolean = false
   ): mutable.HashMap[Method, Array[Int]] = {
-    val foundInstatiations: mutable.HashMap[Method, Array[Int]] =
+    val foundInstatiations: mutable.HashMap[Method, Array[Int]] = {
       mutable.HashMap()
+    }
     project.allMethodsWithBody foreach { method =>
       {
-        val classLoaderInstantiationInstructions =
+        val classLoaderInstantiationInstructions : Array[Int] =
           findClassLoaderInstantiationInstructions(method, logVariety)
         if (!classLoaderInstantiationInstructions.isEmpty) {
           foundInstatiations += (method -> classLoaderInstantiationInstructions)
