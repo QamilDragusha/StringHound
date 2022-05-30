@@ -1,6 +1,8 @@
 # Tools
 
-The following tools will be explained and documented below
+The following tools will be explained and documented below:
+ - ClassLoaderUsageAnalysis
+ - ClassDeobfuscationBenchmark
 
 ## ClassLoaderUsageAnalysis
 
@@ -79,3 +81,39 @@ To analyze multiple apk-only files from a bunch of files listed in a .txt file I
 -p /Users/me/Documents/paths.txt -apk
 ```
 
+## ClassDeobfuscationBenchmark
+
+A benchmark tool which analyzes given APKs with the underlying *ClassHound* implementation
+and exports a detailed overview of the type-specific recall.
+
+### Requirements
+
+In order to run _ClassHound_, both _apkTool_ as well as _pypy3_ have to be installed and 
+made available in the path.
+
+### Usage
+
+The parameters required to execute the benchmark are as follows and can be ordered as desirerd.
+
+```
+-basePath <path_to_the_base_directory> -pathsFilePath <path_to_the_paths_csv> -logPath <path_to_the_log_csv>
+```
+
+
+###### BasePath
+
+The directory to which the paths in the given *pathsFilePath* are relative to.
+
+###### PathsFilePath
+
+The path to the *.csv* file that contains all apk file names relative to the *basePath*.
+
+###### LogPath
+
+The path to the *logFile* to be created.
+
+##### Example
+
+```
+-basePath /Users/me/Documents/APKs/ -logPath /Users/me/Desktop/class_benchmark_results.csv -pathsFilePath /Users/me/Desktop/paths.csv 
+```
