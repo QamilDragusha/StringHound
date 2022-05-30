@@ -2,7 +2,7 @@ package tools
 
 import analyses.SlicingClassAnalysis
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
-import helper.{APKManager, ClassLoaderFinder, PrintLog}
+import helper.{APKManager, ClassLoaderFinder, LoggingLevel, PrintLog}
 import main.StringDecryption.ErrorLogger
 import org.apache.commons.cli.{CommandLine, DefaultParser, Options}
 import org.opalj.br.ObjectType
@@ -35,7 +35,7 @@ object ClassDeobfuscationBenchmark {
 
   def main(args: Array[String]): Unit = {
     OPALLogger.updateLogger(GlobalLogContext, ErrorLogger)
-    PrintLog.mute()
+    PrintLog.setLoggingLevel(LoggingLevel.Verbose)
     initializeCommandLine(args)
     val filePaths = readAllPathsFromPathsFile()
     val results = evaluate(filePaths)
@@ -193,9 +193,11 @@ object ClassDeobfuscationBenchmark {
     )
     val characteristics =
       classLoaderSlicingAnalysis.successfullyAnalyzedCharacteristics
+    println(characteristics)
     var totalFoundClassLoaders = 0
-    characteristics.values().forEach(value => totalFoundClassLoaders += value)
-    (characteristics.asScala, totalFoundClassLoaders)
+    characteristics.values.foreach(value => totalFoundClassLoaders += value)
+    println("Total: " + totalFoundClassLoaders)
+    (characteristics, totalFoundClassLoaders)
   }
 
   private def writeResults(

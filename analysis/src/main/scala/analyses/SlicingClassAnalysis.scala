@@ -36,9 +36,11 @@ import org.mockito.ArgumentMatchers.{anyInt, anyString}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.mock.MockCreationSettings
 import org.mockito.stubbing.Answer
+import scala.io.AnsiColor._
 
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
+import scala.collection.mutable
 import scala.io.Source
 import scala.reflect.runtime.universe.typeOf
 
@@ -57,7 +59,7 @@ class SlicingClassAnalysis(
   private val CharSequenceObjectType = ObjectType("java/lang/CharSequence")
 
   val successfullyAnalyzedCharacteristics =
-    new ConcurrentHashMap[ObjectType, Int]()
+    new mutable.LinkedHashMap[ObjectType, Int]()
 
   var genericErrors = new AtomicInteger
   var out: PrintStream = _
@@ -1716,19 +1718,25 @@ class SlicingClassAnalysis(
     } else {
       apkManager.leaker.leakResult(resultField, context)
       // only consider all leaked classes
-
-      successfullyAnalyzedCharacteristics.replace(
-        context.dataDestination,
-        successfullyAnalyzedCharacteristics.getOrDefault(
-          context.dataDestination,
-          0
-        )
-      )
+      logRevealedCharacteristics(context)
 
       successful.incrementAndGet()
       true
     }
 
+  }
+
+  def logRevealedCharacteristics(context: ClassSlicingContext) : Unit = {
+    println(s"${BLUE}Log revealed${RESET}")
+    synchronized{
+      val objectType = context.dataDestination
+      val currentTotal = successfullyAnalyzedCharacteristics.get(objectType)
+      if (currentTotal.isDefined) {
+        successfullyAnalyzedCharacteristics.update(objectType, currentTotal.get + 1)
+      } else {
+        successfullyAnalyzedCharacteristics += {objectType -> 1}
+      }
+    }
   }
 
   def removeConstantStrings(result: String): String = {
