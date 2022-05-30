@@ -35,7 +35,7 @@ object ClassDeobfuscationBenchmark {
 
   def main(args: Array[String]): Unit = {
     OPALLogger.updateLogger(GlobalLogContext, ErrorLogger)
-    PrintLog.setLoggingLevel(LoggingLevel.Verbose)
+    PrintLog.mute()
     initializeCommandLine(args)
     val filePaths = readAllPathsFromPathsFile()
     val results = evaluate(filePaths)
