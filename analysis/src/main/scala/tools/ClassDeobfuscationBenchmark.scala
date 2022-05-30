@@ -22,7 +22,7 @@ import scala.collection.mutable
   "of how many of the found dynamic code loading instances were we able to
   correctly deobfuscate the class?"
  */
-object ClassDeobfuscationEvaluation {
+object ClassDeobfuscationBenchmark {
 
   private val options = initializeOptions()
   private var commandLine: CommandLine = _
