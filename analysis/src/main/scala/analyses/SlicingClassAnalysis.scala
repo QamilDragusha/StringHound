@@ -9,7 +9,7 @@ import java.util.{Timer, TimerTask}
 import customBRClasses.leakers.{ByteBufferLeaker, StringLeaker}
 import debugging.Dumper
 import helper.{APKManager, AndroidLibraryMocker, ClassLoaderFinder, PrintLog}
-import main.StringDecryption
+import main.Deobfuscator
 import org.apache.commons.lang3.ClassUtils
 import org.mockito.Mockito.{mock, when, withSettings}
 import org.mockito.internal.stubbing.answers.ThrowsException
@@ -93,7 +93,7 @@ class SlicingClassAnalysis(
 
   val logStream = new FileWriter(
     new File(
-      StringDecryption.outputDir + "/logs/" + parameters.head + "Log.txt"
+      Deobfuscator.outputDir + "/logs/" + parameters.head + "Log.txt"
     ),
     false
   )
@@ -264,13 +264,13 @@ class SlicingClassAnalysis(
           } catch {
             case e: Throwable ⇒
               PrintLog.e(s"doAnalyze catched exception $e")
-              if (StringDecryption.logSlicing) {
+              if (Deobfuscator.logSlicing) {
                 val sb = new StringBuilder()
                 sb.append(parameters.head + "\n")
                   .append(method + "\n")
                   .append(method.classFile + "\n")
-                StringDecryption.logger.error(sb.toString())
-                StringDecryption.logger.error(e.getStackTrace.mkString("\n"))
+                Deobfuscator.logger.error(sb.toString())
+                Deobfuscator.logger.error(e.getStackTrace.mkString("\n"))
               }
           }
         }
@@ -288,7 +288,7 @@ class SlicingClassAnalysis(
     System.setErr(err)
     System.setOut(out)
     PrintLog.i(
-      "Write results to -> " + StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
+      "Write results to -> " + Deobfuscator.outputDir + "/results/" + parameters.head + ".txt"
     )
 
     teardownAnalysis(t0, t1, t2, t3, start)
@@ -308,7 +308,7 @@ class SlicingClassAnalysis(
         .map(_.toURI.toURL)
     resultStream = new FileWriter(
       new File(
-        StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
+        Deobfuscator.outputDir + "/results/" + parameters.head + ".txt"
       ),
       false
     )
@@ -580,10 +580,10 @@ class SlicingClassAnalysis(
       } catch {
         case ex: Throwable =>
           PrintLog.e("Throwable thrown")
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
       }
     }
@@ -753,36 +753,36 @@ class SlicingClassAnalysis(
         case ex: java.lang.VerifyError =>
           PrintLog.e("Exception " + ex)
           verifyErrors.incrementAndGet()
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: java.lang.reflect.InvocationTargetException =>
           PrintLog.e(s"InvocationTargetException $ex, printing Stack Trace")
           ex.printStackTrace()
           invocationTargetError.incrementAndGet()
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: java.lang.NullPointerException =>
           PrintLog.e("Exception " + ex)
           ex.printStackTrace()
           nullPointerError.incrementAndGet()
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: ParameterUsageException ⇒
           PrintLog.e("Exception " + ex)
           parameterErrors.incrementAndGet()
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
 
         //androidx/coordinator
@@ -799,18 +799,18 @@ class SlicingClassAnalysis(
               }
           )
           noClassDef.incrementAndGet()
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
 
         case ex: java.util.NoSuchElementException =>
           PrintLog.e("Exception " + ex)
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
         case ex: ThreadDeath =>
           PrintLog.i("Exception " + ex)
@@ -821,10 +821,10 @@ class SlicingClassAnalysis(
           PrintLog.e("Generic Exception LLLL " + ex)
           ex.printStackTrace()
           genericErrors.incrementAndGet()
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
 
       }
@@ -842,9 +842,9 @@ class SlicingClassAnalysis(
         classOf[Thread].getMethod("stop").invoke(runner)
       } catch {
         case e: Throwable =>
-          StringDecryption.logger.error(parameters.head)
-          StringDecryption.logger.error(e.getMessage)
-          StringDecryption.logger.error(e.getStackTrace.mkString("\n"))
+          Deobfuscator.logger.error(parameters.head)
+          Deobfuscator.logger.error(e.getMessage)
+          Deobfuscator.logger.error(e.getStackTrace.mkString("\n"))
       }
       timeouts.incrementAndGet()
     }
@@ -2006,7 +2006,7 @@ class SlicingClassAnalysis(
     System.setErr(err)
     System.setOut(out)
     PrintLog.i(
-      "Write results to -> " + StringDecryption.outputDir + "/results/" + parameters.head + ".txt"
+      "Write results to -> " + Deobfuscator.outputDir + "/results/" + parameters.head + ".txt"
     )
 
     val end = Instant.now()

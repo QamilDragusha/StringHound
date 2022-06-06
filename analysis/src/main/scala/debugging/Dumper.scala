@@ -1,6 +1,6 @@
 package debugging
 
-import main.StringDecryption
+import main.Deobfuscator
 import org.opalj.br.{ClassFile, Code, Method, MethodTemplate}
 
 import java.io.{File, FileWriter}
@@ -23,12 +23,12 @@ object Dumper {
   private var uniqueId : Int = 0
 
   private def makeAllDirectories(subdirectories: String = null) : Unit = {
-    new File(StringDecryption.outputDir + "/results/").mkdir()
-    new File(StringDecryption.outputDir + "/results/debugging/").mkdir()
+    new File(Deobfuscator.outputDir + "/results/").mkdir()
+    new File(Deobfuscator.outputDir + "/results/debugging/").mkdir()
 
     if (subdirectories != null) return
 
-    var directory = StringDecryption.outputDir + "results/debugging/"
+    var directory = Deobfuscator.outputDir + "results/debugging/"
 
     val splittedDirs = subdirectories.replaceFirst(directory, "").split("/")
 
@@ -39,7 +39,7 @@ object Dumper {
   }
 
   private def getFileDirectory(subDirectory: String) : String = {
-    StringDecryption.outputDir + "/results/" + "debugging/" + subDirectory
+    Deobfuscator.outputDir + "/results/" + "debugging/" + subDirectory
   }
 
   def dumpCode(code: Code, fileName: String, resultSubDirectory: String = "code/", message: String = null, force: Boolean = false) : Unit = {
@@ -156,7 +156,7 @@ object Dumper {
     if (!allowAnyDumping) return
     if (!classFiles) return
 
-    val fileDirectory = StringDecryption.outputDir + "/results/" + resultSubDirectory
+    val fileDirectory = Deobfuscator.outputDir + "/results/" + resultSubDirectory
     val fileName = (modifiedClassFile.fqn + "--FROM--" +  initialMethod.name).replaceAll("/", "-")
 
     new File(fileDirectory).mkdir()
@@ -214,7 +214,7 @@ object Dumper {
     if (!slicedMethods) return
     if (slicedMethod.body isDefined) {
       println("Sliced result of " + originalMethod)
-      val fileDirectory = StringDecryption.outputDir + "/results/" + resultSubDirectory
+      val fileDirectory = Deobfuscator.outputDir + "/results/" + resultSubDirectory
       val fileName = (originalMethod.classFile.fqn + "@" +  originalMethod.name).replaceAll("/", "-")
       new File(fileDirectory).mkdir()
       val slicedMethodStream = new FileWriter(new File(fileDirectory + fileName + ".txt"), false)

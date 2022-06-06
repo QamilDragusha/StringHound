@@ -15,9 +15,9 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.io.Source
 
-object StringDecryption {
+object Deobfuscator {
 
-  val logger: Logger = LoggerFactory.getLogger(StringDecryption.getClass)
+  val logger: Logger = LoggerFactory.getLogger(Deobfuscator.getClass)
   var outputDir = "."
 
   val options = new Options()

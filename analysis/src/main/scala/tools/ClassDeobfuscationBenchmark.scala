@@ -3,19 +3,19 @@ package tools
 import analyses.SlicingClassAnalysis
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
 import helper.{APKManager, ClassLoaderFinder, LoggingLevel, PrintLog}
-import main.StringDecryption.ErrorLogger
+import main.Deobfuscator.ErrorLogger
 import org.apache.commons.cli.{CommandLine, DefaultParser, Options}
 import org.opalj.br.ObjectType
 import org.opalj.br.analyses.Project
 import org.opalj.log.{GlobalLogContext, OPALLogger}
 
 import java.io.File
-import java.net.URL
-import java.util.concurrent
-import java.util.concurrent.{ConcurrentHashMap, atomic}
+import java.util.concurrent.{ForkJoinPool, atomic}
 import java.util.concurrent.atomic.AtomicInteger
-import scala.collection.JavaConverters.mapAsScalaMapConverter
 import scala.collection.mutable
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.mutable.ParArray
+import scala.io.AnsiColor._
 
 /*
   Evaluates the recall of the class deobfuscation, namely
@@ -30,20 +30,57 @@ object ClassDeobfuscationBenchmark {
   private val pathsFilePathOption = "pathsFilePath"
   private val basePathOption = "basePath"
   private val logPathOption = "logPath"
+  private val summaryDirectoryOption = "summaryDirectory"
+
+  private val totalAnalyzed = new AtomicInteger()
+  private val totalAnalyzedUsages = new AtomicInteger()
 
   private val erroneosUsageAnalyses = new AtomicInteger()
+
+  private val forkJoinPool = new ForkJoinPool(2)
+
+  lazy val logPath: String = commandLine.getOptionValue(logPathOption)
+  lazy val pathsFilePath: String =
+    commandLine.getOptionValue(pathsFilePathOption)
+  lazy val basePath: String =
+    extractDirFromCommandLine(basePathOption)
+  lazy val summaryDirectory: String =
+    extractDirFromCommandLine(summaryDirectoryOption)
+
 
   def main(args: Array[String]): Unit = {
     OPALLogger.updateLogger(GlobalLogContext, ErrorLogger)
     PrintLog.mute()
     initializeCommandLine(args)
     val filePaths = readAllPathsFromPathsFile()
-    val results = evaluate(filePaths)
-    writeResults(results)
+    analyzeUsagesAndReveals(filePaths)
     val errors = erroneosUsageAnalyses.get()
     if (errors > 0) {
       println(s"Encountered $errors errors")
     }
+  }
+
+  private def extractDirFromCommandLine(commandLineOption: String): String = {
+    var path = commandLine.getOptionValue(commandLineOption)
+    println(commandLineOption)
+    if (!path.endsWith("/")) path += "/"
+    path
+  }
+
+  def toParArray[T](array: Array[T]): ParArray[T] = {
+    val parArray = array.par
+    parArray.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
+    parArray
+  }
+
+  def logTotalAnalysisStepCounter(): Unit = {
+    val total = totalAnalyzed.incrementAndGet()
+    println(s"Analyzing $total")
+  }
+
+  def logUsageAnalysisStepCounter(): Unit = {
+    val total = totalAnalyzedUsages.incrementAndGet()
+    println(s"Analyzing usages $total")
   }
 
   private def initializeCommandLine(args: Array[String]): Unit = {
@@ -70,51 +107,37 @@ object ClassDeobfuscationBenchmark {
       true,
       "The path of the log file to be created"
     )
+
+    options.addRequiredOption(
+      summaryDirectoryOption,
+      "summaryDirectory",
+      true,
+      "The directory of the summaries to be created"
+    )
     options
   }
 
   private def readAllPathsFromPathsFile(): Array[String] = {
-    val pathToPathsFile: String =
-      commandLine.getOptionValue(pathsFilePathOption)
-    var basePath = commandLine.getOptionValue(basePathOption)
-
-    if (!basePath.endsWith("/")) basePath += "/"
-
-    val pathsFile = new File(pathToPathsFile)
+    val pathsFile = new File(pathsFilePath)
     if (!pathsFile.exists()) {
       class PathsFileNotExistentException extends RuntimeException
       throw new PathsFileNotExistentException()
     }
     val pathsFileReader = CSVReader.open(pathsFile)
     pathsFileReader.iterator.flatten
+      .filter(relativeFilePath => {
+       !new File(s"$summaryDirectory$relativeFilePath.csv").exists()
+      })
       .map(relativeFilePath => s"$basePath$relativeFilePath")
       .toArray
   }
 
-  private def evaluate(
-      paths: Array[String]
-  ): mutable.Map[ObjectType, (Int, Int)] = {
-    val (totalCharacteristics, totalRevealedCharacteristics) =
-      analyzeUsagesAndReveals(paths)
-    val totalAndCustomUsagesByType: mutable.HashMap[ObjectType, (Int, Int)] = new mutable.HashMap()
-    totalCharacteristics.keySet.foreach(objectType => {
-      totalAndCustomUsagesByType += {
-        objectType -> Tuple2(
-          totalCharacteristics(objectType),
-          totalRevealedCharacteristics.getOrElse(objectType, 0)
-        )
-      }
-    })
-    totalAndCustomUsagesByType
-  }
-
-
   private def analyzeUsagesAndReveals(
       paths: Array[String]
-  ): (mutable.Map[ObjectType, Int], mutable.Map[ObjectType, Int]) = {
-    var totalCharacteristics : mutable.Map[ObjectType, Int] = new mutable.HashMap()
-    var totalRevealedCharacteristics: mutable.Map[ObjectType, Int] = new mutable.HashMap()
-    paths.par.foreach(filePath => {
+  ): Unit = {
+
+    toParArray(paths).foreach(filePath => {
+      logUsageAnalysisStepCounter()
       val appFile = new File(filePath)
       if (!appFile.exists()) {
         println(s"AppFile $filePath not found!")
@@ -126,14 +149,10 @@ object ClassDeobfuscationBenchmark {
             val (revealCharacteristics, _) =
               getSingleAppsClassLoaderAnalysisCharacteristics(appFile)
 
-            // summarize resulting characteristics. Could cause race
-            // conditions without synchronization
-            synchronized {
-              totalCharacteristics = unsafelyCopyAndUpdateCharacteristics(totalCharacteristics, usageCharacteristics)
-            } // Splitting up synchonized blocks increases performance
-            synchronized{
-              totalRevealedCharacteristics = unsafelyCopyAndUpdateCharacteristics(totalRevealedCharacteristics, revealCharacteristics)
-            }
+            logTotalAnalysisStepCounter()
+
+            val relativeFilePath = filePath.replaceFirst(basePath, "")
+            saveApplicationSummary(usageCharacteristics, revealCharacteristics, relativeFilePath)
 
           } catch {
             case _: Exception => erroneosUsageAnalyses.incrementAndGet()
@@ -142,24 +161,18 @@ object ClassDeobfuscationBenchmark {
       }
 
     })
-    (totalCharacteristics, totalRevealedCharacteristics)
   }
 
-  private def unsafelyCopyAndUpdateCharacteristics(
-                                                    characteristicToUpdate: mutable.Map[ObjectType, Int],
-                                                    update: mutable.Map[ObjectType, Int]
-                                                  ): mutable.Map[ObjectType, Int] = {
-    val characteristics = characteristicToUpdate.clone()
-    update.foreach(updateEntry => {
-      val (objectTypeToUpdate, amountToAdd) = updateEntry
-      val currentAmount =  characteristics.get(objectTypeToUpdate)
-      if (currentAmount.isDefined) {
-        characteristics.update(objectTypeToUpdate, currentAmount.get + amountToAdd)
-      } else {
-        characteristics += {objectTypeToUpdate -> amountToAdd}
-      }
+  private def saveApplicationSummary(usageCharacteristics: mutable.Map[ObjectType, Int], foundCharacteristics: mutable.Map[ObjectType, Int], relativeAppFilePath: String) = {
+    val summaryFile = new File(s"$summaryDirectory$relativeAppFilePath.csv")
+    summaryFile.createNewFile()
+    val summaryWriter = CSVWriter.open(summaryFile)
+
+    usageCharacteristics.keySet.foreach(objectType => {
+      summaryWriter.writeRow(Seq(objectType.fqn, usageCharacteristics(objectType), foundCharacteristics.getOrElse(objectType, 0)))
     })
-    characteristics
+
+    summaryWriter.close()
   }
 
   private def getSingleAppsClassLoaderUsages(
@@ -173,6 +186,7 @@ object ClassDeobfuscationBenchmark {
       result
     } catch {
       case _: Exception =>
+        print("Exception")
         erroneosUsageAnalyses.incrementAndGet()
         (new mutable.LinkedHashMap[ObjectType, Int](), 0)
     }
@@ -198,21 +212,6 @@ object ClassDeobfuscationBenchmark {
     characteristics.values.foreach(value => totalFoundClassLoaders += value)
     println("Total: " + totalFoundClassLoaders)
     (characteristics, totalFoundClassLoaders)
-  }
-
-  private def writeResults(
-      results: mutable.Map[ObjectType, (Int, Int)]
-  ): Unit = {
-    val logPath = commandLine.getOptionValue(logPathOption)
-    val logFile = new File(logPath)
-    logFile.createNewFile()
-    val logWriter = CSVWriter.open(logFile)
-    results.foreach(resultEntry => {
-      val objectType = resultEntry._1
-      val (totalClasses, revealedClasses) = resultEntry._2
-      logWriter.writeRow(Seq(objectType.fqn, totalClasses, revealedClasses))
-    })
-    logWriter.close()
   }
 
 }

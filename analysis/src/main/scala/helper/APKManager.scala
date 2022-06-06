@@ -1,7 +1,7 @@
 package helper
 
 import helper.APKManager.decodedApkDirectoryPath
-import main.StringDecryption.ErrorLogger
+import main.Deobfuscator.ErrorLogger
 import org.opalj.br.analyses.Project
 import org.opalj.log.OPALLogger
 
@@ -113,7 +113,7 @@ class APKManager(pathToAPK: String) {
         Seq(
           "bash",
           "-c",
-          s"cd src/main/python/enjarify-master && pypy3 -O -m enjarify.main $pathToAPK -o $pathToJAR -f"
+          s"cd src/main/python/enjarify-master && python3 -O -m enjarify.main $pathToAPK -o $pathToJAR -f"
         )
       ).!!
 

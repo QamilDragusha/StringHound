@@ -3,7 +3,7 @@ package analyses
 import java.io.{File, FileWriter}
 
 import classifier.StringClassifier
-import main.StringDecryption
+import main.Deobfuscator
 
 import scala.io.Source
 
@@ -12,7 +12,7 @@ class StringFeatureExtraction(stringsFile: File, val parameters: Seq[String], fi
 
   def doAnalyze(): Unit = {
 
-    val resultStream = new FileWriter(new File(StringDecryption.outputDir + "/results/" + parameters.head + ".txt"), false)
+    val resultStream = new FileWriter(new File(Deobfuscator.outputDir + "/results/" + parameters.head + ".txt"), false)
     val strings = Source.fromFile(stringsFile.getAbsolutePath, "UTF-8").getLines().filter(l => l.nonEmpty)
 
     for (string <- strings) {

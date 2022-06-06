@@ -4,7 +4,7 @@ import java.io.{File, FileWriter}
 import java.net.URL
 
 import classifier.{MethodClassifier, StringClassifier, Utils}
-import main.StringDecryption
+import main.Deobfuscator
 import org.opalj.br.analyses.{Project, StringConstantsInformationKey}
 
 class StringAndMethodAnalysis(val project: Project[URL], val parameters: Seq[String]) {
@@ -14,8 +14,8 @@ class StringAndMethodAnalysis(val project: Project[URL], val parameters: Seq[Str
 
     val t1 = System.currentTimeMillis()
 
-    val resultStream = new FileWriter(new File(StringDecryption.outputDir + "/results/" + parameters.head + ".txt"), false)
-    val logStream = new FileWriter(new File(StringDecryption.outputDir + "/logs/" + parameters.head + "Log.txt"), false)
+    val resultStream = new FileWriter(new File(Deobfuscator.outputDir + "/results/" + parameters.head + ".txt"), false)
+    val logStream = new FileWriter(new File(Deobfuscator.outputDir + "/logs/" + parameters.head + "Log.txt"), false)
     logStream.write("Apk;PreAnalysisTime;StringClassifierTime;MethodClassifierTime;OverallTime;ClassCount;MethodCount;MeanInstPerMethodCount;MedianInstPerMethodCount;MaxInstPerMethodCount;ApkInstCount;StringUniqCount\n")
 
     try {
@@ -29,8 +29,8 @@ class StringAndMethodAnalysis(val project: Project[URL], val parameters: Seq[Str
         }
       }
     } catch{
-      case e:Throwable => StringDecryption.logger.error(parameters.head)
-        StringDecryption.logger.error(e.getMessage)
+      case e:Throwable => Deobfuscator.logger.error(parameters.head)
+        Deobfuscator.logger.error(e.getMessage)
     }
 
     val t2 = System.currentTimeMillis()
@@ -44,8 +44,8 @@ class StringAndMethodAnalysis(val project: Project[URL], val parameters: Seq[Str
         resultStream.append(s"${decryptionMethod.classFile.fqn};${decryptionMethod.signature.toJava};\n")
       }
     } catch {
-      case e: Throwable => StringDecryption.logger.error(parameters.head)
-        StringDecryption.logger.error(e.getMessage)
+      case e: Throwable => Deobfuscator.logger.error(parameters.head)
+        Deobfuscator.logger.error(e.getMessage)
     }
 
     val t3 = System.currentTimeMillis()

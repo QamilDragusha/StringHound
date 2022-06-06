@@ -2,8 +2,8 @@ package tools
 
 import com.github.tototoshi.csv.CSVWriter
 import helper.{APKManager, AndroidJarAnalysis, ClassLoaderFinder}
-import main.StringDecryption
-import main.StringDecryption.{ErrorLogger, outputDir, stdLib}
+import main.Deobfuscator
+import main.Deobfuscator.{ErrorLogger, outputDir, stdLib}
 import org.apache.commons.cli.{DefaultParser, Options}
 import org.apache.commons.io.IOUtils
 import org.opalj.br.ObjectType
@@ -326,7 +326,7 @@ object ClassLoaderUsageAnalysis {
   }
 
   private def getStandardOutputDirectory: File = {
-    val pathToOutputDir = StringDecryption.outputDir + "/classLoaderAnalysis/"
+    val pathToOutputDir = Deobfuscator.outputDir + "/classLoaderAnalysis/"
     val outputDir = new File(pathToOutputDir)
     if (!outputDir.exists()) outputDir.mkdir()
     outputDir

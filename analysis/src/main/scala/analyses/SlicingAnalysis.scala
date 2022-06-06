@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Timer, TimerTask}
 
 import classifier.{MethodClassifier, StringClassifier}
-import main.StringDecryption
+import main.Deobfuscator
 import org.apache.commons.lang3.ClassUtils
 import org.opalj._
 import org.opalj.ai.domain.PerformAI
@@ -18,7 +18,7 @@ import org.opalj.ba.{CLASS, CODE, CodeAttributeBuilder, CodeElement, FIELD, FIEL
 import org.opalj.bc.Assembler
 import org.opalj.bi.ACC_PUBLIC
 import org.opalj.br.analyses.{Project, StringConstantsInformationKey}
-import org.opalj.br.instructions.{MethodInvocationInstruction, _}
+import org.opalj.br.instructions._
 import org.opalj.br.{PCInMethod, _}
 import org.opalj.collection.immutable.{ConstArray, RefArray}
 import org.opalj.slicing.{DeobfuscationSlicer, ParameterUsageException, SlicingConfiguration}
@@ -117,8 +117,8 @@ class SlicingAnalysis(val project: Project[URL], val parameters: Seq[String]) {
       urls = List.empty[URL].toArray
     else
       urls = new File(parameters.tail.head).listFiles(f ⇒ f.getName.endsWith(".jar")).map(_.toURI.toURL)
-    resultStream = new FileWriter(new File(StringDecryption.outputDir + "/results/" + parameters.head + ".txt"), false)
-    val logStream = new FileWriter(new File(StringDecryption.outputDir + "/logs/" + parameters.head + "Log.txt"), false)
+    resultStream = new FileWriter(new File(Deobfuscator.outputDir + "/results/" + parameters.head + ".txt"), false)
+    val logStream = new FileWriter(new File(Deobfuscator.outputDir + "/logs/" + parameters.head + "Log.txt"), false)
     logStream.write("Apk;PreAnalysisTime;StringClassifierTime;MethodClassifierTime;SlicingTime;OverallTime;ClassCount;MethodCount;MeanInstPerMethodCount;MedianInstPerMethodCount;MaxInstPerMethodCount;ApkInstCount;StringUniqCount;DecryptedStrings;SlicesCount\n")
     //inputResultStream = new FileWriter(new File("results/" + parameters.head + "-input-result.txt"), false)
     System.setOut(devNullPrintStream)
@@ -219,13 +219,13 @@ class SlicingAnalysis(val project: Project[URL], val parameters: Seq[String]) {
           }
         } catch {
           case e: Throwable ⇒
-            if (StringDecryption.logSlicing) {
+            if (Deobfuscator.logSlicing) {
               val sb = new StringBuilder()
               sb.append(parameters.head + "\n")
                 .append(method + "\n")
                 .append(method.classFile + "\n")
-              StringDecryption.logger.error(sb.toString())
-              StringDecryption.logger.error(e.getStackTrace.mkString("\n"))
+              Deobfuscator.logger.error(sb.toString())
+              Deobfuscator.logger.error(e.getStackTrace.mkString("\n"))
             }
         }
       }
@@ -254,7 +254,7 @@ class SlicingAnalysis(val project: Project[URL], val parameters: Seq[String]) {
     val t4 = System.currentTimeMillis()
     System.setErr(err)
     System.setOut(out)
-    println("Write results to -> " + StringDecryption.outputDir + "/results/" + parameters.head + ".txt")
+    println("Write results to -> " + Deobfuscator.outputDir + "/results/" + parameters.head + ".txt")
 
     val end = Instant.now()
     //val relevantMethods = methods.map(_._1).map(m => m.classFile.thisType.simpleName + " " + m)
@@ -415,10 +415,10 @@ class SlicingAnalysis(val project: Project[URL], val parameters: Seq[String]) {
         }
       } catch {
         case ex: Throwable =>
-          if (StringDecryption.logSlicing) {
-            StringDecryption.logger.error(parameters.head)
-            StringDecryption.logger.error(ex.getMessage)
-            StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+          if (Deobfuscator.logSlicing) {
+            Deobfuscator.logger.error(parameters.head)
+            Deobfuscator.logger.error(ex.getMessage)
+            Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
           }
       }
     }
@@ -761,52 +761,52 @@ class SlicingAnalysis(val project: Project[URL], val parameters: Seq[String]) {
         } catch {
           case ex: java.lang.VerifyError =>
             verifyErrors.incrementAndGet()
-            if (StringDecryption.logSlicing) {
-              StringDecryption.logger.error(parameters.head)
-              StringDecryption.logger.error(ex.getMessage)
-              StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+            if (Deobfuscator.logSlicing) {
+              Deobfuscator.logger.error(parameters.head)
+              Deobfuscator.logger.error(ex.getMessage)
+              Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
             }
           case ex: java.lang.reflect.InvocationTargetException =>
             invocationTargetError.incrementAndGet()
-            if (StringDecryption.logSlicing) {
-              StringDecryption.logger.error(parameters.head)
-              StringDecryption.logger.error(ex.getMessage)
-              StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+            if (Deobfuscator.logSlicing) {
+              Deobfuscator.logger.error(parameters.head)
+              Deobfuscator.logger.error(ex.getMessage)
+              Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
             }
           case ex: java.lang.NullPointerException =>
             nullPointerError.incrementAndGet()
-            if (StringDecryption.logSlicing) {
-              StringDecryption.logger.error(parameters.head)
-              StringDecryption.logger.error(ex.getMessage)
-              StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+            if (Deobfuscator.logSlicing) {
+              Deobfuscator.logger.error(parameters.head)
+              Deobfuscator.logger.error(ex.getMessage)
+              Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
             }
           case ex: ParameterUsageException ⇒
             parameterErrors.incrementAndGet()
-            if (StringDecryption.logSlicing) {
-              StringDecryption.logger.error(parameters.head)
-              StringDecryption.logger.error(ex.getMessage)
-              StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+            if (Deobfuscator.logSlicing) {
+              Deobfuscator.logger.error(parameters.head)
+              Deobfuscator.logger.error(ex.getMessage)
+              Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
             }
           case ex: java.lang.NoClassDefFoundError =>
             noClassDef.incrementAndGet()
-            if (StringDecryption.logSlicing) {
-              StringDecryption.logger.error(parameters.head)
-              StringDecryption.logger.error(ex.getMessage)
-              StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+            if (Deobfuscator.logSlicing) {
+              Deobfuscator.logger.error(parameters.head)
+              Deobfuscator.logger.error(ex.getMessage)
+              Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
             }
           case ex: java.util.NoSuchElementException =>
-            if (StringDecryption.logSlicing) {
-              StringDecryption.logger.error(parameters.head)
-              StringDecryption.logger.error(ex.getMessage)
-              StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+            if (Deobfuscator.logSlicing) {
+              Deobfuscator.logger.error(parameters.head)
+              Deobfuscator.logger.error(ex.getMessage)
+              Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
             }
           case ex: ThreadDeath => throw ex
           case ex: Throwable =>
             genericErrors.incrementAndGet()
-            if (StringDecryption.logSlicing) {
-              StringDecryption.logger.error(parameters.head)
-              StringDecryption.logger.error(ex.getMessage)
-              StringDecryption.logger.error(ex.getStackTrace.mkString("\n"))
+            if (Deobfuscator.logSlicing) {
+              Deobfuscator.logger.error(parameters.head)
+              Deobfuscator.logger.error(ex.getMessage)
+              Deobfuscator.logger.error(ex.getStackTrace.mkString("\n"))
             }
         }
       }
@@ -822,9 +822,9 @@ class SlicingAnalysis(val project: Project[URL], val parameters: Seq[String]) {
         classOf[Thread].getMethod("stop").invoke(runner)
       } catch {
         case e: Throwable =>
-          StringDecryption.logger.error(parameters.head)
-          StringDecryption.logger.error(e.getMessage)
-          StringDecryption.logger.error(e.getStackTrace.mkString("\n"))
+          Deobfuscator.logger.error(parameters.head)
+          Deobfuscator.logger.error(e.getMessage)
+          Deobfuscator.logger.error(e.getStackTrace.mkString("\n"))
       }
       timeouts.incrementAndGet()
     }
